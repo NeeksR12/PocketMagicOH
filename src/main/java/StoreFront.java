@@ -109,7 +109,7 @@ public class StoreFront {
 
         // Card fields
         Map<String, String> fields = new HashMap<>();
-        int p, s; // Need to convert the string from the map to an int later
+        int price, stock; // Need to convert the string from the map to an int later
 
         try {
             fr = new FileReader("inventory.txt");
@@ -118,7 +118,7 @@ public class StoreFront {
             success = true;
         }
         catch (FileNotFoundException error) {
-            System.out.println("Issue finding the file.");;
+            System.out.println("Issue finding the file.");
         }
 
         if (success) { // Low security and won't work if file for some reason was not formatted right
@@ -131,11 +131,11 @@ public class StoreFront {
                 }
                 else if (line.isEmpty()){
 
-                    int price = Utils.isNumeric(fields.get("Price")) // Checks if numeric and then gives int value
+                    price = Utils.isNumeric(fields.get("Price")) // Checks if numeric and then gives int value
                             ? Integer.parseInt(fields.get("Price"))
                             : 0;
 
-                    int stock = Utils.isNumeric(fields.get("Stock"))
+                    stock = Utils.isNumeric(fields.get("Stock"))
                             ? Integer.parseInt(fields.get("Stock"))
                             : 0;
 
@@ -200,7 +200,7 @@ public class StoreFront {
                 CommandType type = CommandType.valueOf(keyword); // Enum value check for keyword
                 commands.add(type.create(input, inventory));
             } catch (IllegalArgumentException e) {
-                commands.add(new InvalidCMD(input));
+                commands.add(new InvalidCMD(input, inventory));
             }
         }
     }

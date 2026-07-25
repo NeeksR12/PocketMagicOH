@@ -1,5 +1,7 @@
 package commands;
 
+import entities.Inventory;
+
 /**
  * InvalidCMD
  * Description: Command to give output for invalid commands
@@ -11,8 +13,8 @@ package commands;
 public class InvalidCMD extends Command {
 
     // Constructor
-    public InvalidCMD(String i) {
-        super(i);
+    public InvalidCMD(String i, Inventory inv) {
+        super(i, inv);
         output = "invalid command\n";
     }
 
