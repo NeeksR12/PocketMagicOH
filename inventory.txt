@@ -1,7 +1,15 @@
 CARD
 Name: squirtle
-Element: water
+Element: turtle
 Rarity: common
 Price: 2
 Stock: 8
+
+CARD
+Name: charizard
+Element: fire
+Rarity: epic
+Price: 5
+Stock: 2
+
 

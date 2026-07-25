@@ -19,7 +19,6 @@ import utils.*;
 // Class
 public class StoreFront {
 
-    //static ArrayList<Card> inventory = new ArrayList<Card>();
     static Inventory inventory = new Inventory(); // Initialized in open store method
     static ArrayList<Command> commands = new ArrayList<Command>();
     static ArrayList<String> incomingCommands = new ArrayList<String>();
@@ -67,19 +66,13 @@ public class StoreFront {
         }
 
         // Updates and outputs
-        for (Command c : commands) { // Still requires actual update logic, probably through enum?
-            /*
-            Somehow need to create a way to collect the actual resulting effect of each command
-            - Enum within command class?
-            - Command type enum should have a result method maybe?
-            - Command type enum should have an instance in the CMD for this?
-             */
+        for (Command c : commands) {
             try {
                 c.parse();
                 c.run();
                 sb.append(c.getOutput()).append("\n"); // Adding result of command output to actual output
             }
-            catch (InterruptedException e) {
+            catch (IllegalArgumentException e) {
                 sb.append(e.getMessage()).append("\n");
             }
         }
@@ -129,7 +122,7 @@ public class StoreFront {
                     String[] parts = line.split(": ", 2);
                     fields.put(parts[0], parts[1]);
                 }
-                else if (line.isEmpty()){
+                else if (line.trim().isEmpty()){
 
                     price = Utils.isNumeric(fields.get("Price")) // Checks if numeric and then gives int value
                             ? Integer.parseInt(fields.get("Price"))
@@ -139,7 +132,7 @@ public class StoreFront {
                             ? Integer.parseInt(fields.get("Stock"))
                             : 0;
 
-                    if (!(fields.get("name") == null || fields.get("element") == null || fields.get("rarity") == null))
+                    if (!(fields.get("Name") == null || fields.get("Element") == null || fields.get("Rarity") == null))
                         inventory.addCard(new Card(
                                 fields.get("Name"),
                                 fields.get("Element"),

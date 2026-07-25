@@ -168,9 +168,10 @@ public class Inventory {
     public void removeCardByName(String name) throws IllegalArgumentException{
         if (isCardInInventory(name)) {
             for (Card c : inv) {
-                if (c.getName().equals(name))
+                if (c.getName().equals(name)) {
                     inv.remove(c);
-                break;
+                    break;
+                }
             }
         }
         else {
@@ -190,7 +191,7 @@ public class Inventory {
 
         for (Card c : inv) {
             sb.append(c.toString());
-            //sb.append("\n");
+            sb.append("\n");
         }
 
         return sb.toString();

@@ -22,7 +22,7 @@ public abstract class Command {
     }
 
     // Abstract methods
-    public abstract void parse() throws InterruptedException;
+    public abstract void parse() throws IllegalArgumentException;
     public abstract void run();
 
     // Getters

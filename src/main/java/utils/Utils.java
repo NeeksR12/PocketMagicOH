@@ -1,5 +1,13 @@
 package utils;
 
+/**
+ * Utils
+ * Description: Final class that contains any helper methods used throughout the PMO system
+ * Name: Nico Rotella
+ * Date Created: May 22nd, 2026
+ * Last Edited: July 25th 2026
+ */
+
 public final class Utils {
 
     // Don't ever need an instance of this class

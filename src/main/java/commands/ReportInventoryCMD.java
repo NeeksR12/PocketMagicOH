@@ -9,7 +9,8 @@ import java.util.ArrayList;
  * ReportInventoryCMD
  * Description: Command for reporting the inventory
  * Name: Nico Rotella
- * Date Created:
+ * Date Created: May 22nd, 2026
+ * Last Edited: July 25th, 2026
  */
 public class ReportInventoryCMD extends Command{
 
