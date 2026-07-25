@@ -155,7 +155,27 @@ public class Inventory {
         if (!isCardInInventory(c.getName())) 
             inv.add(c);
         else 
-            throw new IllegalArgumentException("Error, this card is already in the inventory.");
+            throw new IllegalArgumentException("Error, this card is already in the inventory therefore cannot be added.");
+    }
+
+    /**
+     * Description: Removes a card from the inventory
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: The card is removed from the inventory
+     * @param name The name of the card being removed
+     * @throws IllegalArgumentException if the card is not in the inventory
+     */
+    public void removeCardByName(String name) throws IllegalArgumentException{
+        if (isCardInInventory(name)) {
+            for (Card c : inv) {
+                if (c.getName().equals(name))
+                    inv.remove(c);
+                break;
+            }
+        }
+        else {
+            throw new IllegalArgumentException("Error, this card is not in the inventory therefore cannot be removed");
+        }
     }
 
     /**
@@ -170,7 +190,7 @@ public class Inventory {
 
         for (Card c : inv) {
             sb.append(c.toString());
-            sb.append("\n");
+            //sb.append("\n");
         }
 
         return sb.toString();

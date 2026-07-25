@@ -1,0 +1,7 @@
+CARD
+Name: squirtle
+Element: water
+Rarity: common
+Price: 2
+Stock: 8
+

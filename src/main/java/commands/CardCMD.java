@@ -31,8 +31,6 @@ public class CardCMD extends Command {
     private String name;
     private final Map<String, String> fields = new HashMap<>();
 
-    // Card
-    private Card c;
 
     // Constructor
     public CardCMD(String i, Inventory inv) {
@@ -55,7 +53,7 @@ public class CardCMD extends Command {
 
         // Error, shouldn't get here but
         if (!tokens[0].equals("CARD")) {
-            throw new IllegalArgumentException("CARD command must start with CARD!");
+            throw new IllegalArgumentException("Error, CARD command must start with CARD!");
         }
 
         // Card name to run command on
@@ -74,7 +72,7 @@ public class CardCMD extends Command {
         if (action == Action.CREATE || action == Action.UPDATE) {
             for (int i = 3; i < tokens.length; i += 2) {
                 if (i + 1 >= tokens.length) {
-                    throw new IllegalArgumentException(String.format("Command not formated correctly, " +
+                    throw new IllegalArgumentException(String.format("Error, command not formated correctly, " +
                             "missing value for field: %s", tokens[i]));
                 }
                 fields.put(tokens[i], tokens[i + 1]);
@@ -87,15 +85,20 @@ public class CardCMD extends Command {
                 // Check that they have each of the keys
                 for (CreateRequired cr : CreateRequired.values()) {
                     if (!fields.containsKey(cr.name())) {
-                        throw new IllegalArgumentException(String.format("Command does not contain key: %s", cr.name()));
+                        throw new IllegalArgumentException(String.format("Error, command does not contain key: %s", cr.name()));
                     }
                 }
                 // Check that the numeric fields are numeric
                 if (!(Utils.isNumeric(fields.get("price")) && Utils.isNumeric(fields.get("stock")))) {
-                    throw new IllegalArgumentException("Numeric values must be provided for price and stock.");
+                    throw new IllegalArgumentException("Error, numeric values must be provided for price and stock.");
                 }
                 break;
             case UPDATE:
+                // Checking if the card is in the inventory
+                if (!inventory.isCardInInventory(name))
+                    throw new IllegalArgumentException("Error, the card that is trying to be updated is not in" +
+                            " the inventory.");
+
                 // Checking if fields contains at least one of the fields to update
                 for (CreateRequired cr : CreateRequired.values()) {
                     if (fields.containsKey(cr.name())) {
@@ -109,7 +112,11 @@ public class CardCMD extends Command {
                             " of the fields to update: %s", requiredFields));
                 }
                 break;
-            // Don't need a case for delete, no arguments after action
+            case DELETE:
+                // Checking if the card is in the inventory
+                if (!inventory.isCardInInventory(name))
+                    throw new IllegalArgumentException("Error, the card that is trying to be deleted is not in" +
+                            " the inventory.");
 
         } // parse
 
@@ -123,59 +130,58 @@ public class CardCMD extends Command {
     @Override
     public void run() {
         switch (action) {
-
-            /*
             case CREATE -> create();
             case UPDATE -> update();
             case DELETE -> delete();
-            //case null, default -> invalid command or something?
+            default -> output = "Error, this was not a valid CARD command.";
 
-            // Need access to the inventory and just do the CUD directly to the inv instead of making new objects
-
-             */
         }
     }
 
     /**
-     * Description: Initializes and instantiates this card and output for this command object with CREATING card state
+     * Description: Adds the card with the given fields to the inventory and sets the output
      * Pre-Condition: Parse has been called already on the command object
-     * Post-Condition: This card and output is initialized and instantiated
+     * Post-Condition: The card has been added and the output has been set
      */
-    /*
+
     private void create() {
-        c = new Card(name, fields.get("element"), fields.get("rarity"),
-                Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock")), Card.State.CREATING);
+        inventory.addCard(new Card(name, fields.get("element"), fields.get("rarity"),
+                Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock"))));
         output = String.format("card %s added", name);
     }
 
-     */
-
     /**
-     * Description: Initializes and instantiates this card and output for this command object with UPDATING state
+     * Description: Updates any fields from the card that need to be updated and sets the output
      * Pre-Condition: Parse has been called already on the command object
-     * Post-Condition: This card and output is initialized and instantiated
+     * Post-Condition: This card has been updated and the output has been set
      */
-    /*
     private void update() {
-        c = new Card(name, fields.get("element"), fields.get("rarity"),
-                Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock")), Card.State.UPDATING);
+        // Card
+        Card c = inventory.getCardByName(name); // Should never throw since parse checks if it is in the inventory
+
+        // Updating any fields that need to be updated
+        for (var entry : fields.entrySet()) {
+            switch (entry.getKey()) {
+                case "element" -> c.setElement(entry.getValue());
+                case "rarity" -> c.setRarity(entry.getValue());
+                case "price" -> c.setPrice(Integer.parseInt(entry.getValue())); // Numeric check happened in parse
+                case "stock" -> c.setStock(Integer.parseInt(entry.getValue()));
+            }
+        }
+
         output = String.format("card %s updated", name);
     }
 
-     */
-
     /**
-     * Description: Initializes and instantiates this card and output for this command object with the name,
-     * DELETING state, and all null
+     * Description: Removes the card from the inventory and sets the output
      * Pre-Condition: Parse has been called already on this command object
-     * Post-Condition: This card and output is initialized and instantiated
+     * Post-Condition: The card has been removed and the output has been set
      */
-    /*
     private void delete() {
-        c = new Card(name);
+        inventory.removeCardByName(name);
         output = String.format("card %s deleted", name);
     }
 
-     */
+
 
 }

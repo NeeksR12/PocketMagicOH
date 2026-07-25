@@ -13,8 +13,9 @@ package entities;
 public class Card {
 
     // Attributes
-    private final String name, element, rarity;
-    private final int price, stock;
+    private final String name;
+    private String element, rarity;
+    private int price, stock;
 
     // Constructors
     /**
@@ -73,4 +74,20 @@ public class Card {
         return stock;
     }
 
+    // Setters
+    public void setElement(String e) {
+        element = e;
+    }
+
+    public void setRarity(String r) {
+        rarity = r;
+    }
+
+    public void setPrice(int p) {
+        price = p;
+    }
+
+    public void setStock(int s) {
+        stock = s;
+    }
 } // Class

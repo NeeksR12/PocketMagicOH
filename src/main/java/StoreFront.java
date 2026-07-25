@@ -139,13 +139,16 @@ public class StoreFront {
                             ? Integer.parseInt(fields.get("Stock"))
                             : 0;
 
-                    inventory.addCard(new Card(
-                            fields.get("Name"),
-                            fields.get("Element"),
-                            fields.get("Rarity"),
-                            price,
-                            stock
-                    ));
+                    if (!(fields.get("name") == null || fields.get("element") == null || fields.get("rarity") == null))
+                        inventory.addCard(new Card(
+                                fields.get("Name"),
+                                fields.get("Element"),
+                                fields.get("Rarity"),
+                                price,
+                                stock
+                        ));
+
+                    fields.clear();
                 }
             } // While parsing
         } // Successful file reader
