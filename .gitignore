@@ -1,0 +1,12 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Java build output
+out/
+build/
+target/
+
+# OS junk
+.DS_Store
+Thumbs.db
