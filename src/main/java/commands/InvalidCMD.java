@@ -1,6 +1,6 @@
 package commands;
 
-import entities.Inventory;
+import databases.Inventory;
 
 /**
  * InvalidCMD

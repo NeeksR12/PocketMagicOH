@@ -1,7 +1,8 @@
 package utils;
 
 import commands.*;
-import entities.Inventory;
+import databases.Customers;
+import databases.Inventory;
 
 /**
  * CommandType
@@ -14,10 +15,16 @@ public enum CommandType {
 
     CARD {
         @Override
-        public Command create(String input, Inventory inventory) {
-            return new CardCMD(input, inventory);
+        public Command create(String input, Inventory inventory, Customers customers) {
+            return new CardCMD(input, inventory, customers);
+        }
+    },
+    CART {
+        @Override
+        public Command create(String input, Inventory inventory, Customers customers) {
+            return new CartCMD(input, inventory, customers);
         }
     }; // , between different enum inheritors
 
-    public abstract Command create(String input, Inventory inventory);
+    public abstract Command create(String input, Inventory inventory, Customers customers);
 }

@@ -1,5 +1,7 @@
-package entities;
+package databases;
 
+
+import entities.Card;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +26,7 @@ public class Inventory {
     public Inventory() {}
 
     /**
-     * Takes an array list and sets it to the store's inv
+     * Param constructor, takes an array list and sets it to the store's inv
      * @param s The array list
      */
     public Inventory(ArrayList<Card> s) {
@@ -32,7 +34,7 @@ public class Inventory {
     }
 
     /**
-     * Takes multiple card objects and fills the store's inv
+     * Param constructor, takes multiple card objects and fills the store's inv
      * @param cards As many cards as being added to the inventory
      */
     public Inventory(Card ... cards) {

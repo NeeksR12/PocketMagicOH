@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import commands.*;
+import databases.Inventory;
 import entities.*;
 import utils.*;
 

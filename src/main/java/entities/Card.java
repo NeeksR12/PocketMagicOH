@@ -6,7 +6,7 @@ package entities;
  * Description: Class for card objects. Each card contains its own attributes such as element, rarity, etc.
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: July 25th 2026
+ * Last Edited: July 25th, 2026
  */
 
 // Class

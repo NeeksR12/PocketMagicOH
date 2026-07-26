@@ -1,7 +1,8 @@
 package commands;
 
+import databases.Customers;
 import entities.Card;
-import entities.Inventory;
+import databases.Inventory;
 import utils.Utils;
 
 import java.util.Arrays;
@@ -19,8 +20,8 @@ import java.util.stream.Collectors;
 public class CardCMD extends Command {
 
     // Enums
-    public enum Action {CREATE, UPDATE, DELETE}
-    public enum CreateRequired {element, rarity, price, stock}
+    private enum Action {CREATE, UPDATE, DELETE}
+    private enum CreateRequired {element, rarity, price, stock}
 
     // Required fields as a string
     private final static String requiredFields = Arrays.stream(CreateRequired.values()).map(Enum::name)
@@ -33,8 +34,8 @@ public class CardCMD extends Command {
 
 
     // Constructor
-    public CardCMD(String i, Inventory inv) {
-        super(i, inv);
+    public CardCMD(String i, Inventory inv, Customers c) {
+        super(i, inv, c);
     }
 
 
@@ -117,10 +118,8 @@ public class CardCMD extends Command {
                 if (!inventory.isCardInInventory(name))
                     throw new IllegalArgumentException("Error, the card that is trying to be deleted is not in" +
                             " the inventory.");
-
-        } // parse
-
-    }
+        } // switch
+    } // parse
 
     /**
      * Description: Actually runs the command, setting the card and output
@@ -134,7 +133,6 @@ public class CardCMD extends Command {
             case UPDATE -> update();
             case DELETE -> delete();
             default -> output = "Error, this was not a valid CARD command.";
-
         }
     }
 
@@ -168,7 +166,6 @@ public class CardCMD extends Command {
                 case "stock" -> c.setStock(Integer.parseInt(entry.getValue()));
             }
         }
-
         output = String.format("card %s updated", name);
     }
 
@@ -181,7 +178,5 @@ public class CardCMD extends Command {
         inventory.removeCardByName(name);
         output = String.format("card %s deleted", name);
     }
-
-
 
 }

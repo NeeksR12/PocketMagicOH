@@ -1,6 +1,7 @@
 package commands;
 
-import entities.Inventory;
+import databases.Customers;
+import databases.Inventory;
 
 /**
  * Command
@@ -14,11 +15,13 @@ public abstract class Command {
     // Attributes
     protected String input, output;
     protected Inventory inventory;
+    protected Customers customers;
 
     // Constructor
-    public Command(String i, Inventory inv) {
+    public Command(String i, Inventory inv, Customers c) {
         input = i;
         inventory = inv;
+        customers = c;
     }
 
     // Abstract methods

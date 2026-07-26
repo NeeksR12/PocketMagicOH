@@ -1,9 +1,7 @@
 package commands;
 
 import entities.Card;
-import entities.Inventory;
-
-import java.util.ArrayList;
+import databases.Inventory;
 
 /**
  * ReportInventoryCMD
