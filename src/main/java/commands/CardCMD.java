@@ -1,8 +1,7 @@
 package commands;
 
-import databases.Customers;
-import entities.Card;
-import databases.Inventory;
+import databases.*;
+import entities.products.Card;
 import utils.Utils;
 
 import java.util.Arrays;
@@ -43,7 +42,7 @@ public class CardCMD extends Command {
      * Description: Takes the input and parses through it, determining the action and the provided fields
      * Pre-Condition: Input should be a card command string, if not will throw an exception related to where the issue was
      * Post-Condition: The input is parsed, action is decided, the fields are updated with their values
-     * @throws IllegalArgumentException if the first token isn't CARD, the action token isn't an action, or is malformed
+     * @throws IllegalArgumentException if the CARD command is malformed
      */
     @Override
     public void parse() throws IllegalArgumentException {
@@ -96,7 +95,7 @@ public class CardCMD extends Command {
                 break;
             case UPDATE:
                 // Checking if the card is in the inventory
-                if (!inventory.isCardInInventory(name))
+                if (!inventory.hasCard(name))
                     throw new IllegalArgumentException("Error, the card that is trying to be updated is not in" +
                             " the inventory.");
 
@@ -115,16 +114,16 @@ public class CardCMD extends Command {
                 break;
             case DELETE:
                 // Checking if the card is in the inventory
-                if (!inventory.isCardInInventory(name))
+                if (!inventory.hasCard(name))
                     throw new IllegalArgumentException("Error, the card that is trying to be deleted is not in" +
                             " the inventory.");
         } // switch
     } // parse
 
     /**
-     * Description: Actually runs the command, setting the card and output
+     * Description: Actually runs the command, updating as required and setting output
      * Pre-Condition: Parse has been run on this command
-     * Post-Condition: Output and card object for this command are set
+     * Post-Condition: Output has been set and command has been run
      */
     @Override
     public void run() {
@@ -141,9 +140,8 @@ public class CardCMD extends Command {
      * Pre-Condition: Parse has been called already on the command object
      * Post-Condition: The card has been added and the output has been set
      */
-
     private void create() {
-        inventory.addCard(new Card(name, fields.get("element"), fields.get("rarity"),
+        inventory.addProduct(new Card(name, fields.get("element"), fields.get("rarity"),
                 Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock"))));
         output = String.format("card %s added", name);
     }
@@ -175,7 +173,7 @@ public class CardCMD extends Command {
      * Post-Condition: The card has been removed and the output has been set
      */
     private void delete() {
-        inventory.removeCardByName(name);
+        inventory.removeProductByName(name);
         output = String.format("card %s deleted", name);
     }
 

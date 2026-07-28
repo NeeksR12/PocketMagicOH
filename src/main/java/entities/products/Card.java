@@ -1,4 +1,4 @@
-package entities;
+package entities.products;
 
 
 /**
@@ -6,11 +6,11 @@ package entities;
  * Description: Class for card objects. Each card contains its own attributes such as element, rarity, etc.
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: July 25th, 2026
+ * Last Edited: July 28th, 2026
  */
 
 // Class
-public class Card {
+public class Card implements Product {
 
     // Attributes
     private final String name;

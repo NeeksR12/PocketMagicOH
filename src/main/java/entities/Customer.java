@@ -6,7 +6,7 @@ package entities;
  * Description: A customer object which can hold a cart to purchase items
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 26th, 2026
+ * Last Edited: July 28th, 2026
  */
 
 // Class
@@ -20,6 +20,7 @@ public class Customer {
     // Constructor
     public Customer(String n) {
         name = n;
+        cart = new Cart();
     }
 
 
@@ -27,5 +28,9 @@ public class Customer {
     // Getters
     public String getName() {
         return name;
+    }
+
+    public Cart getCart() {
+        return cart;
     }
 }

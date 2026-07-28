@@ -1,14 +1,15 @@
 package commands;
 
-import entities.Card;
-import databases.Inventory;
+import entities.products.Card;
+import databases.*;
+import entities.products.Product;
 
 /**
  * ReportInventoryCMD
  * Description: Command for reporting the inventory
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: July 25th, 2026
+ * Last Edited: July 28th, 2026
  */
 public class ReportInventoryCMD extends Command{
 
@@ -22,8 +23,8 @@ public class ReportInventoryCMD extends Command{
      * @param i The input string (Should be "REPORT INVENTORY;")
      * @param inv The inventory being the list of cards at the store
      */
-    public ReportInventoryCMD(String i, Inventory inv) {
-        super(i, inv);
+    public ReportInventoryCMD(String i, Inventory inv, Customers c) {
+        super(i, inv, c);
     }
 
     /**
@@ -47,8 +48,8 @@ public class ReportInventoryCMD extends Command{
     @Override
     public void run() {
         if (inventory.hasStock()) {
-            for (Card c : inventory.getInv()) {
-                sb.append(String.format("%s %d\n", c.getName(), c.getStock()));
+            for (Product p : inventory.getInv()) {
+                sb.append(String.format("%s %d\n", p.getName(), p.getStock()));
                 // NOTE: Less resource intensive than +=, += creates a new string builder each iteration
             }
             output = sb.toString();

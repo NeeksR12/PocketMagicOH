@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 import commands.*;
 import databases.Inventory;
-import entities.*;
+import entities.products.Card;
 import utils.*;
 
 /**
@@ -14,7 +14,7 @@ import utils.*;
  * Description: Main class for Pocket Magic Oh. Contains the inventory system
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: July 25th 2026
+ * Last Edited: July 28th 2026
  */
 
 // Class
@@ -134,7 +134,7 @@ public class StoreFront {
                             : 0;
 
                     if (!(fields.get("Name") == null || fields.get("Element") == null || fields.get("Rarity") == null))
-                        inventory.addCard(new Card(
+                        inventory.addProduct(new Card(
                                 fields.get("Name"),
                                 fields.get("Element"),
                                 fields.get("Rarity"),
@@ -190,7 +190,7 @@ public class StoreFront {
 
         // Report inventory command
         if (input.equals("REPORT INVENTORY;")) {
-            commands.add(new ReportInventoryCMD(input, inventory));
+            commands.add(new ReportInventoryCMD(input, inventory)); // Bookmark
         }
         else {
             try {

@@ -1,7 +1,8 @@
 package databases;
 
 
-import entities.Card;
+import entities.products.Card;
+import entities.products.Product;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,12 +13,12 @@ import java.util.NoSuchElementException;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: July 25th, 2026
+ * Last Edited: July 28th, 2026
  */
 public class Inventory {
 
     // Attributes
-    private ArrayList<Card> inv = new ArrayList<Card>();
+    private ArrayList<Product> inv = new ArrayList<Product>();
 
     // Constructors
     /**
@@ -27,18 +28,18 @@ public class Inventory {
 
     /**
      * Param constructor, takes an array list and sets it to the store's inv
-     * @param s The array list
+     * @param i The array list
      */
-    public Inventory(ArrayList<Card> s) {
-        inv = s;
+    public Inventory(ArrayList<Product> i) {
+        inv = i;
     }
 
     /**
      * Param constructor, takes multiple card objects and fills the store's inv
-     * @param cards As many cards as being added to the inventory
+     * @param products As many products as being added to the inventory
      */
-    public Inventory(Card ... cards) {
-        inv.addAll(Arrays.asList(cards));
+    public Inventory(Product ... products) {
+        inv.addAll(Arrays.asList(products));
     }
 
     /**
@@ -48,10 +49,12 @@ public class Inventory {
      * @param name The name of the card
      * @return The boolean if found
      */
-    public Boolean isCardInInventory(String name) {
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return true;
+    public Boolean hasCard(String name) {
+        for (Product p : inv) {
+            if (p instanceof Card c) { // NOTE: This is called pattern notation, no need to declare and instantiate later
+                if (c.getName().equals(name))
+                    return true;
+            }
         }
         return false;
     }
@@ -65,9 +68,11 @@ public class Inventory {
      * @throws NoSuchElementException if not found
      */
     public Card getCardByName(String name) throws NoSuchElementException{
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return c; // Found
+        for (Product p : inv) {
+            if (p instanceof Card c) {
+                if (c.getName().equals(name))
+                    return c; // Found
+            }
         }
         throw new NoSuchElementException("Error, this card is not in the inventory."); // Not found
     }
@@ -80,10 +85,12 @@ public class Inventory {
      * @return The element of the card if found
      * @throws NoSuchElementException if the card is not in inventory
      */
-    public String getElementByName(String name) throws NoSuchElementException {
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return c.getElement();
+    public String getCardElementByName(String name) throws NoSuchElementException {
+        for (Product p : inv) {
+            if (p instanceof Card c) {
+                if (c.getName().equals(name))
+                    return c.getElement();
+            }
         }
         throw new NoSuchElementException("Error, this card is not in the inventory.");
     }
@@ -96,10 +103,12 @@ public class Inventory {
      * @return The rarity of the card if found
      * @throws NoSuchElementException if the card is not in inventory
      */
-    public String getRarityByName(String name) throws NoSuchElementException {
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return c.getRarity();
+    public String getCardRarityByName(String name) throws NoSuchElementException {
+        for (Product p : inv) {
+            if (p instanceof Card c) {
+                if (c.getName().equals(name))
+                    return c.getRarity();
+            }
         }
         throw new NoSuchElementException("Error, this card is not in the inventory.");
     }
@@ -113,9 +122,11 @@ public class Inventory {
      * @throws NoSuchElementException if the card is not in inventory
      */
     public int getPriceByName(String name) throws NoSuchElementException {
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return c.getPrice();
+        for (Product p : inv) {
+            if (p instanceof Card c) {
+                if (c.getName().equals(name))
+                    return c.getPrice();
+            }
         }
         throw new NoSuchElementException("Error, this card is not in the inventory.");
     }
@@ -129,9 +140,11 @@ public class Inventory {
      * @throws NoSuchElementException if the card is not in inventory
      */
     public int getStockByName(String name) throws NoSuchElementException {
-        for (Card c : inv) {
-            if (c.getName().equals(name))
-                return c.getStock();
+        for (Product p : inv) {
+            if (p instanceof Card c) {
+                if (c.getName().equals(name))
+                    return c.getStock();
+            }
         }
         throw new NoSuchElementException("Error, this card is not in the inventory.");
     }
@@ -147,31 +160,31 @@ public class Inventory {
     }
 
     /**
-     * Description: Adds a card to inventory
-     * Pre-Condition: Inventory and Card are initialized and card is not already in the inventory
-     * Post-Condition: Card is added or exception is thrown
-     * @param c The card
+     * Description: Adds a product to inventory
+     * Pre-Condition: Inventory and Product are initialized and product is not already in the inventory
+     * Post-Condition: Product is added or exception is thrown
+     * @param p The product
      * @throws IllegalArgumentException if the card is already in the inventory
      */
-    public void addCard(Card c) {
-        if (!isCardInInventory(c.getName())) 
-            inv.add(c);
+    public void addProduct(Product p) {
+        if (!hasProduct(p.getName()))
+            inv.add(p);
         else 
             throw new IllegalArgumentException("Error, this card is already in the inventory therefore cannot be added.");
     }
 
     /**
-     * Description: Removes a card from the inventory
+     * Description: Removes a product from the inventory
      * Pre-Condition: Inventory is initialized
-     * Post-Condition: The card is removed from the inventory
-     * @param name The name of the card being removed
-     * @throws IllegalArgumentException if the card is not in the inventory
+     * Post-Condition: The product is removed from the inventory
+     * @param name The name of the product being removed
+     * @throws IllegalArgumentException if the product is not in the inventory
      */
-    public void removeCardByName(String name) throws IllegalArgumentException{
-        if (isCardInInventory(name)) {
-            for (Card c : inv) {
-                if (c.getName().equals(name)) {
-                    inv.remove(c);
+    public void removeProductByName(String name) throws IllegalArgumentException{
+        if (hasCard(name)) {
+            for (Product p : inv) {
+                if (p.getName().equals(name)) {
+                    inv.remove(p);
                     break;
                 }
             }
@@ -180,6 +193,25 @@ public class Inventory {
             throw new IllegalArgumentException("Error, this card is not in the inventory therefore cannot be removed");
         }
     }
+
+    /**
+     * Description: Checks if a product is in the inventory and returns a boolean
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: Boolean is returned
+     * @param name The name of the product
+     * @return The boolean if found
+     */
+    public boolean hasProduct(String name) {
+        for (Product p : inv) {
+            if (p.getName().equals(name)) 
+                return true;
+        }
+        return false;
+    }
+    
+    
+    
+    
 
     /**
      * Description: Gives the string value of the inventory, this is what should be in the text file
@@ -191,8 +223,8 @@ public class Inventory {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        for (Card c : inv) {
-            sb.append(c.toString());
+        for (Product p : inv) {
+            sb.append(p.toString());
             sb.append("\n");
         }
 
@@ -200,7 +232,7 @@ public class Inventory {
     }
 
     // Getter
-    public ArrayList<Card> getInv() {
+    public ArrayList<Product> getInv() {
         return inv;
     }
 

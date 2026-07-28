@@ -1,9 +1,9 @@
 package commands;
 
 
-import databases.Customers;
-import databases.Inventory;
+import databases.*;
 import entities.Customer;
+import utils.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 26th, 2026
+ * Last Edited: July 28th, 2026
  */
 
 // Class
@@ -29,15 +29,18 @@ public class CartCMD extends Command {
     private final Map<String, String> updates = new HashMap<String, String>();
 
 
-    // Constructor, look at this later, definitely need customer list
+    // Constructor
     public CartCMD(String i, Inventory inv, Customers c) {
         super(i, inv, c);
     }
 
 
-
-
-
+    /**
+     * Description: Takes the input and parses through it, determining the action and the provided fields
+     * Pre-Condition: Input should be a cart command string, if not will throw an exception related to where the issue was
+     * Post-Condition: The input is parsed, action is decided, the fields are updated with their values
+     * @throws IllegalArgumentException if the CART command is malformed
+     */
     @Override
     public void parse() throws IllegalArgumentException {
         String line = input.replace(";", "").trim();
@@ -52,7 +55,8 @@ public class CartCMD extends Command {
         // Check if customer name is actually a customer
         try {
             customer = customers.getCustomerByName(tokens[1]);
-        } catch (NoSuchElementException e) {
+        }
+        catch (NoSuchElementException e) {
             throw new IllegalArgumentException("Error, this customer is not a shopper.");
         }
 
@@ -98,21 +102,80 @@ public class CartCMD extends Command {
             } // Bonus updates
         } // Adding updates
 
-
-        /*
-        Must check that all updates are valid:
-        Quantity is an int (value)
-        Product is in inventory (key), could be more than just a card, could be out of stock, check must just verify
-        it is sold
-         */
-
-
+        // Checking that the updates are valid
+        // Adding to cart
+        if (action == Action.ADD) {
+            for (var entry : updates.entrySet()) {
+                // Checking if this is a product we sell
+                if (!inventory.hasProduct(entry.getKey())) {
+                    throw new IllegalArgumentException(String.format("Error, %s is not a product being sold at the " +
+                            "moment.", entry.getKey()));
+                }
+                // Checking that their desired quantity was a positive integer
+                if (!Utils.isNumeric(entry.getValue())) { // Was not a number
+                    throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
+                            "must be a positive integer.", entry.getKey()));
+                }
+                else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
+                    throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
+                            "must be positive.", entry.getKey()));
+                }
+            }
+        }
+        // Removing from cart
+        else if (action == Action.REMOVE) {
+            for (var entry : updates.entrySet()) {
+                // Checking that this is a product in their cart
+                if (!customer.getCart().hasProduct(entry.getKey())) {
+                    throw new IllegalArgumentException(String.format("Error, %s is not a product in %s's cart.",
+                            entry.getKey(), customer.getName()));
+                }
+                // Checking that their desired quantity was a positive integer
+                if (!Utils.isNumeric(entry.getValue())) { // Was not a number
+                    throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
+                            "must be a positive integer.", entry.getKey()));
+                }
+                else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
+                    throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
+                            "must be positive.", entry.getKey()));
+                }
+                // Checking that it is possible to remove that many of this product from their cart
+                if (customer.getCart().quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
+                    throw new IllegalArgumentException(String.format("Error, cannot remove %s of %s from %s's cart " +
+                                    "since they only have %d.", entry.getValue(), entry.getKey(), customer.getName(),
+                            customer.getCart().quantityOf(entry.getKey())));
+                }
+            }
+        }
     }
 
 
 
+    /**
+     * Description: Actually runs the command, updating as required and setting output
+     * Pre-Condition: Parse has been run on this command
+     * Post-Condition: Output has been set and command has been run
+     */
     @Override
     public void run() {
+        switch (action) {
+            case ADD -> add();
+            case REMOVE -> remove();
+            case CLEAR -> clear();
+            default -> output = "Error, this was not a valid CART command.";
+        }
+    }
+
+    // To do
+    private void add() {
+
+    }
+
+    private void remove() {
+
+    }
+
+    private void clear() {
 
     }
 }

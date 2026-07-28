@@ -1,16 +1,17 @@
 package utils;
 
 import commands.*;
-import databases.Customers;
-import databases.Inventory;
+import databases.*;
 
 /**
  * CommandType
  * ENUM that contains a way to create a command object for each type of command
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: July 25th, 2026
+ * Last Edited: July 28th, 2026
  */
+
+// Enum
 public enum CommandType {
 
     CARD {
