@@ -14,13 +14,13 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: July 29th, 2026
  */
 
 // Class
 public class CartCMD extends Command {
 
-    // Enums
+    // Enum
     private enum Action {ADD, REMOVE, CLEAR}
 
     // Attributes
@@ -150,7 +150,6 @@ public class CartCMD extends Command {
     }
 
 
-
     /**
      * Description: Actually runs the command, updating as required and setting output
      * Pre-Condition: Parse has been run on this command
@@ -166,16 +165,40 @@ public class CartCMD extends Command {
         }
     }
 
-    // To do
+    /**
+     * Description: Adds the desired updates to the cart and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The items have been added to the cart and the output has been set
+     */
     private void add() {
-
+        for (var entry : updates.entrySet()) {
+            customer.getCart().addToCart(inventory.getProductByName(entry.getKey()),
+                    Integer.parseInt(entry.getValue()));
+        }
+        output = String.format("%s cart updated", customer.getName());
     }
 
+    /**
+     * Description: Removes the desired updates from the cart and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The items have been removed from the cart and the output has been set
+     */
     private void remove() {
-
+        for (var entry : updates.entrySet()) {
+            customer.getCart().removeFromCart(inventory.getProductByName(entry.getKey()),
+                    Integer.parseInt(entry.getValue()));
+        }
+        output = String.format("%s cart updated", customer.getName());
     }
 
+    /**
+     * Description: Clears the customers cart and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The cart has been cleared and the output has been set
+     */
     private void clear() {
-
+        customer.getCart().emptyCart();
+        output = String.format("%s cart cleared", customer.getName());
     }
+
 }

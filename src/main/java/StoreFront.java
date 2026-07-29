@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import commands.*;
-import databases.Inventory;
+import databases.*
 import entities.products.Card;
 import utils.*;
 
@@ -21,6 +21,7 @@ import utils.*;
 public class StoreFront {
 
     static Inventory inventory = new Inventory(); // Initialized in open store method
+    static Customers customers = new Customers()
     static ArrayList<Command> commands = new ArrayList<Command>();
     static ArrayList<String> incomingCommands = new ArrayList<String>();
 

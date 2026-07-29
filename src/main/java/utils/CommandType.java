@@ -27,5 +27,7 @@ public enum CommandType {
         }
     }; // , between different enum inheritors
 
+    // Method to create a command
     public abstract Command create(String input, Inventory inventory, Customers customers);
+
 }

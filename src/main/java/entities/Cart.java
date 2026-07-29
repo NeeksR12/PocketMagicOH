@@ -10,7 +10,7 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: July 29th, 2026
  */
 
 // Class
@@ -20,28 +20,46 @@ public class Cart {
     private final Map<Product, Integer> items = new HashMap<Product, Integer>(); // card -> quantity
 
 
-
     // Constructors
-    public Cart() {
+    public Cart() {}
 
+    /**
+     * Description: Adds or updates a cart item
+     * Pre-Condition: Params are of correct types
+     * Post-Condition: The cart is updated to reflect the new desired items
+     * @param product The product being added to the cart
+     * @param quantity The quantity of the product being added to the cart
+     */
+    public void addToCart(Product product, Integer quantity) {
+        // This product is already in the cart
+        items.computeIfPresent(product, (k, v) -> v + quantity);
+        // This product was not in the cart
+        items.putIfAbsent(product, quantity);
     }
 
-    // Add cart
-    public void addToCart(String name, Integer quantity) {
-        /*
-        Two pressing issues, the command takes in a quantity then a product. Right now this is just cards, not packs
-        or decks. Eventually needs to be able to accommodate other types of products.
-        Second, the customer inputs just the name of the product wanted, would be best to cross-reference with the
-        inventory? Need to potentially have inventory access, add products by name
 
-        // This logic should be in cartCMD, keep entity simple
-         */
+    /**
+     * Description: Removes and/or deletes a cart item
+     * Pre-Condition: Params are of correct types
+     * Post-Condition: The cart is updated to reflect the removed items
+     * @param product The product being removed from the cart
+     * @param quantity The quantity of the product being removed from the cart
+     */
+    public void removeFromCart(Product product, Integer quantity) {
+        // Taking that item out of their cart
+        items.computeIfPresent(product, (k, v) -> v - quantity);
+        // If the item has no more quantity, removing it from their cart
+        if (items.get(product) <= 0)
+            items.remove(product);
     }
 
-
-    // Remove cart
-    public void removeFromCart(String name, Integer quantity) {
-
+    /**
+     * Description: Empties the cart
+     * Pre-Condition: None
+     * Post-Condition: The cart is cleared and has zero items
+     */
+    public void emptyCart() {
+        items.clear();
     }
 
     /**
@@ -91,8 +109,21 @@ public class Cart {
     }
 
 
+    /**
+     * Description: Gives the string value of the cart, this is what is to be displayed in each customer. NOTE: starts with \n
+     * Pre-Condition: This cart is initialized
+     * Post-Condition: String is returned
+     * @return The string value of the cart
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
 
-    // Needs to string
+        for (var entry : items.entrySet())
+            sb.append(String.format("\n%s - %d", entry.getKey().getName(), entry.getValue()));
+
+        return sb.toString();
+    }
 
     // Getters
     public Map<Product, Integer> getItems() {

@@ -14,16 +14,23 @@ public class Customer {
 
     // Attributes
     private final String name;
-    private Cart cart;
-    // Needs way to have cart, one for now do multiple later
+    private final Cart cart = new Cart();
 
     // Constructor
     public Customer(String n) {
         name = n;
-        cart = new Cart();
     }
 
-
+    /**
+     * Description: Gives the string value of the customer, this is what is to be displayed in Customers
+     * Pre-Condition: This Customer is initialized
+     * Post-Condition: String is returned
+     * @return the string value of the customer
+     */
+    @Override
+    public String toString() {
+        return name + cart;
+    }
 
     // Getters
     public String getName() {

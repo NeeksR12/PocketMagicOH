@@ -10,19 +10,16 @@ import java.util.NoSuchElementException;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 26th, 2026
+ * Last Edited: July 29th, 2026
  */
 
 // Class
 public class Customers {
 
     // Attributes
-    private ArrayList<Customer> shoppers = new ArrayList<Customer>();
+    private final ArrayList<Customer> shoppers = new ArrayList<Customer>();
 
-    // Constructors
-    /**
-     * Default constructor
-     */
+    // Constructor
     public Customers() {}
 
 
@@ -57,11 +54,52 @@ public class Customers {
         throw new NoSuchElementException("Error, this customer is not a shopper.");
     }
 
-    /*
-    If needed, add more search through shoppers command, I'm sure checking what is in customers carts would be valuable
-    Must add a toString() still
-    NAME
-    cart.toString()
+    /**
+     * Description: Adds a customer to shoppers
+     * Pre-Condition: Customers and Customer are initialized and the customer is not already a shopper
+     * Post-Condition: Customer is added or exception is thrown
+     * @param c The customer
+     * @throws IllegalArgumentException if the customer is already a shopper
      */
+    public void addShopper(Customer c) {
+        if (isCustomerAShopper(c.getName()))
+            shoppers.add(c);
+        else
+            throw new IllegalArgumentException(String.format("Error, %s is already a shopper therefore cannot be added."
+                    , c.getName()));
+    }
+
+    /**
+     * Description: Removes a shopper by name
+     * Pre-Condition: Customers is initialized
+     * Post-Condition: The customer is removed from shoppers
+     * @param name The name of the customer
+     * @throws IllegalArgumentException if the customer is not a shopper
+     */
+    public void removeShopperByName(String name) throws IllegalArgumentException {
+        if (isCustomerAShopper(name))
+            shoppers.remove(getCustomerByName(name));
+        else
+            throw new IllegalArgumentException(String.format("Error, %s is not a shopper therefore cannot be removed.",
+                    name));
+    }
+
+    /**
+     * Description: Gives the string value of the customers, this is what should be in the text file
+     * Pre-Condition: This Customers is initialized
+     * Post-Condition: String is returned
+     * @return The string value of the customers
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        for (Customer c : shoppers) {
+            sb.append(c.toString());
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 
 }

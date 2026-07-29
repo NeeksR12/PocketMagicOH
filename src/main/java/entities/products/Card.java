@@ -6,7 +6,7 @@ package entities.products;
  * Description: Class for card objects. Each card contains its own attributes such as element, rarity, etc.
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: July 29th, 2026
  */
 
 // Class
@@ -52,6 +52,19 @@ public class Card implements Product {
                 """, name, element, rarity, price, stock);
     }
 
+    /**
+     * Description: Removes a quantity of stock from the card
+     * Pre-Condition: Quantity should be less than stock
+     * Post-Condition: Stock is removed or error is thrown
+     * @param quantity The amount of stock to be removed
+     * @throws IllegalArgumentException if quantity is greater stock
+     */
+    public void removeStock(Integer quantity) throws IllegalArgumentException {
+        if (quantity > stock)
+            throw new IllegalArgumentException("Error, cannot remove more stock than there is.");
+        else
+            stock -= quantity;
+    }
 
     // Getters
     public String getName() {
@@ -90,4 +103,5 @@ public class Card implements Product {
     public void setStock(int s) {
         stock = s;
     }
+
 } // Class

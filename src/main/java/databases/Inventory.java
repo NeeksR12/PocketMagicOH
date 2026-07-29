@@ -1,11 +1,13 @@
 package databases;
 
 
+import entities.Cart;
 import entities.products.Card;
 import entities.products.Product;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -13,35 +15,79 @@ import java.util.NoSuchElementException;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: July 29th, 2026
  */
 public class Inventory {
 
     // Attributes
-    private ArrayList<Product> inv = new ArrayList<Product>();
+    private final ArrayList<Product> inv = new ArrayList<Product>();
 
-    // Constructors
-    /**
-     * Default constructor
-     */
+    // Constructor
     public Inventory() {}
 
+
+    // General Product Operations
     /**
-     * Param constructor, takes an array list and sets it to the store's inv
-     * @param i The array list
+     * Description: Checks if a product is in the inventory and returns a boolean
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: Boolean is returned
+     * @param name The name of the product
+     * @return The boolean if found
      */
-    public Inventory(ArrayList<Product> i) {
-        inv = i;
+    public boolean hasProduct(String name) {
+        for (Product p : inv) {
+            if (p.getName().equals(name))
+                return true;
+        }
+        return false;
     }
 
     /**
-     * Param constructor, takes multiple card objects and fills the store's inv
-     * @param products As many products as being added to the inventory
+     * Description: Looks for a product in the inventory by its name
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: Product is returned or exception is thrown
+     * @param name The name of the product being searched for
+     * @return The product if found
+     * @throws NoSuchElementException if not found
      */
-    public Inventory(Product ... products) {
-        inv.addAll(Arrays.asList(products));
+    public Product getProductByName(String name) throws NoSuchElementException {
+        for (Product p : inv) {
+            if (p.getName().equals(name))
+                return p; // Found
+        }
+        throw new NoSuchElementException("Error, this product is not in the inventory."); // Not found
     }
 
+    /**
+     * Description: Adds a product to inventory
+     * Pre-Condition: Inventory and Product are initialized and product is not already in the inventory
+     * Post-Condition: Product is added or exception is thrown
+     * @param p The product
+     * @throws IllegalArgumentException if the card is already in the inventory
+     */
+    public void addProduct(Product p) {
+        if (!hasProduct(p.getName()))
+            inv.add(p);
+        else
+            throw new IllegalArgumentException("Error, this product is already in the inventory therefore cannot be added.");
+    }
+
+    /**
+     * Description: Removes a product from the inventory
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: The product is removed from the inventory
+     * @param name The name of the product being removed
+     * @throws IllegalArgumentException if the product is not in the inventory
+     */
+    public void removeProductByName(String name) throws IllegalArgumentException {
+        if (hasProduct(name))
+            inv.remove(getProductByName(name));
+        else
+            throw new IllegalArgumentException("Error, this product is not in the inventory therefore cannot be removed");
+    }
+
+
+    // Card Specific Operations
     /**
      * Description: Checks if a card is in the inventory and returns a boolean
      * Pre-Condition: Inventory is initialized
@@ -159,59 +205,32 @@ public class Inventory {
         return !inv.isEmpty();
     }
 
-    /**
-     * Description: Adds a product to inventory
-     * Pre-Condition: Inventory and Product are initialized and product is not already in the inventory
-     * Post-Condition: Product is added or exception is thrown
-     * @param p The product
-     * @throws IllegalArgumentException if the card is already in the inventory
-     */
-    public void addProduct(Product p) {
-        if (!hasProduct(p.getName()))
-            inv.add(p);
-        else 
-            throw new IllegalArgumentException("Error, this card is already in the inventory therefore cannot be added.");
-    }
 
+    // General Class Operations
     /**
-     * Description: Removes a product from the inventory
-     * Pre-Condition: Inventory is initialized
-     * Post-Condition: The product is removed from the inventory
-     * @param name The name of the product being removed
-     * @throws IllegalArgumentException if the product is not in the inventory
+     * Description: Removes the stock from the inventory from the items in the given cart
+     * Pre-Condition: Desired quantities in cart should be greater than the stock of the product
+     * Post-Condition: Stock is removed from inventory or exception is thrown
+     * @param c The cart
+     * @throws IllegalArgumentException if the cart desired more of a product than it is stocked
      */
-    public void removeProductByName(String name) throws IllegalArgumentException{
-        if (hasCard(name)) {
-            for (Product p : inv) {
-                if (p.getName().equals(name)) {
-                    inv.remove(p);
-                    break;
-                }
+    public void purchaseCart(Cart c) throws IllegalArgumentException {
+        // Checking stock availability
+        for (var entry : c.getItems().entrySet()) {
+            Product product = entry.getKey();
+            Integer quantity = entry.getValue();
+
+            // Checking if there is less stock than desired
+            if (product.getStock() <= quantity) {
+                throw new IllegalArgumentException("Error, checkout could not be completed due to stock.");
             }
         }
-        else {
-            throw new IllegalArgumentException("Error, this card is not in the inventory therefore cannot be removed");
-        }
-    }
 
-    /**
-     * Description: Checks if a product is in the inventory and returns a boolean
-     * Pre-Condition: Inventory is initialized
-     * Post-Condition: Boolean is returned
-     * @param name The name of the product
-     * @return The boolean if found
-     */
-    public boolean hasProduct(String name) {
-        for (Product p : inv) {
-            if (p.getName().equals(name)) 
-                return true;
+        // Sufficient stock, removing stock from inventory
+        for (var entry : c.getItems().entrySet()) {
+            entry.getKey().removeStock(entry.getValue()); // Shouldn't throw since checked above
         }
-        return false;
     }
-    
-    
-    
-    
 
     /**
      * Description: Gives the string value of the inventory, this is what should be in the text file
