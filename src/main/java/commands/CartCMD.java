@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
@@ -92,7 +92,6 @@ public class CartCMD extends Command {
                     // Add values to updates
                     updates.put(tokens[counter + 2], tokens[counter + 1]);
 
-
                 }
                 else {
                     throw new IllegalArgumentException(String.format("Error, command not formatted correctly after %s."
@@ -103,50 +102,57 @@ public class CartCMD extends Command {
         } // Adding updates
 
         // Checking that the updates are valid
-        // Adding to cart
-        if (action == Action.ADD) {
-            for (var entry : updates.entrySet()) {
-                // Checking if this is a product we sell
-                if (!inventory.hasProduct(entry.getKey())) {
-                    throw new IllegalArgumentException(String.format("Error, %s is not a product being sold at the " +
-                            "moment.", entry.getKey()));
+        switch (action) {
+            case ADD -> {
+                for (var entry : updates.entrySet()) {
+                    // Checking if this is a product we sell
+                    if (!inventory.hasProduct(entry.getKey())) {
+                        throw new IllegalArgumentException(String.format("Error, %s is not a product being sold at the " +
+                                "moment.", entry.getKey()));
+                    }
+                    // Checking that their desired quantity was a positive integer
+                    if (!Utils.isNumeric(entry.getValue())) { // Was not a number
+                        throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
+                                "must be a positive integer.", entry.getKey()));
+                    }
+                    else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
+                        throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
+                                "must be positive.", entry.getKey()));
+                    }
                 }
-                // Checking that their desired quantity was a positive integer
-                if (!Utils.isNumeric(entry.getValue())) { // Was not a number
-                    throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
-                            "must be a positive integer.", entry.getKey()));
+            } // ADD
+            case REMOVE -> {
+                for (var entry : updates.entrySet()) {
+                    // Checking that this is a product in their cart
+                    if (!customer.getCart().hasProduct(entry.getKey())) {
+                        throw new IllegalArgumentException(String.format("Error, %s is not a product in %s's cart.",
+                                entry.getKey(), customer.getName()));
+                    }
+                    // Checking that their desired quantity was a positive integer
+                    if (!Utils.isNumeric(entry.getValue())) { // Was not a number
+                        throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
+                                "must be a positive integer.", entry.getKey()));
+                    }
+                    else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
+                        throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
+                                "must be positive.", entry.getKey()));
+                    }
+                    // Checking that it is possible to remove that many of this product from their cart
+                    if (customer.getCart().quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
+                        throw new IllegalArgumentException(String.format("Error, cannot remove %s of %s from %s's cart " +
+                                        "since they only have %d.", entry.getValue(), entry.getKey(), customer.getName(),
+                                customer.getCart().quantityOf(entry.getKey())));
+                    }
                 }
-                else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
-                    throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
-                            "must be positive.", entry.getKey()));
+            } // REMOVE
+            case CLEAR -> {
+                // Checking that there are no more arguments after the action
+                if (tokens.length > 3) {
+                    throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s.",
+                            tokens[0], tokens[1], tokens[2]));
                 }
-            }
-        }
-        // Removing from cart
-        else if (action == Action.REMOVE) {
-            for (var entry : updates.entrySet()) {
-                // Checking that this is a product in their cart
-                if (!customer.getCart().hasProduct(entry.getKey())) {
-                    throw new IllegalArgumentException(String.format("Error, %s is not a product in %s's cart.",
-                            entry.getKey(), customer.getName()));
-                }
-                // Checking that their desired quantity was a positive integer
-                if (!Utils.isNumeric(entry.getValue())) { // Was not a number
-                    throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
-                            "must be a positive integer.", entry.getKey()));
-                }
-                else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
-                    throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
-                            "must be positive.", entry.getKey()));
-                }
-                // Checking that it is possible to remove that many of this product from their cart
-                if (customer.getCart().quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
-                    throw new IllegalArgumentException(String.format("Error, cannot remove %s of %s from %s's cart " +
-                                    "since they only have %d.", entry.getValue(), entry.getKey(), customer.getName(),
-                            customer.getCart().quantityOf(entry.getKey())));
-                }
-            }
-        }
+            } // CLEAR
+        } // Switch action
     }
 
 

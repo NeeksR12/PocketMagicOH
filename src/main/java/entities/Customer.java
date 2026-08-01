@@ -6,7 +6,7 @@ package entities;
  * Description: A customer object which can hold a cart to purchase items
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
@@ -29,7 +29,7 @@ public class Customer {
      */
     @Override
     public String toString() {
-        return name + cart;
+        return name + cart + "\n";
     }
 
     // Getters

@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * Description: Card Command to handle all actions related to card
  * Name: Nico Rotella
  * Date Created: May 6th, 2026
- * Last Edited: July 25th, 2026
+ * Last Edited: August 1st, 2026
  */
 public class CardCMD extends Command {
 
@@ -81,7 +81,7 @@ public class CardCMD extends Command {
 
         // Validating given fields
         switch (action) {
-            case CREATE:
+            case CREATE -> {
                 // Check that they have each of the keys
                 for (CreateRequired cr : CreateRequired.values()) {
                     if (!fields.containsKey(cr.name())) {
@@ -92,8 +92,8 @@ public class CardCMD extends Command {
                 if (!(Utils.isNumeric(fields.get("price")) && Utils.isNumeric(fields.get("stock")))) {
                     throw new IllegalArgumentException("Error, numeric values must be provided for price and stock.");
                 }
-                break;
-            case UPDATE:
+            } // CREATE
+            case UPDATE -> {
                 // Checking if the card is in the inventory
                 if (!inventory.hasCard(name))
                     throw new IllegalArgumentException("Error, the card that is trying to be updated is not in" +
@@ -111,12 +111,13 @@ public class CardCMD extends Command {
                     throw new IllegalArgumentException(String.format("CARD UPDATE command must contain at least one" +
                             " of the fields to update: %s", requiredFields));
                 }
-                break;
-            case DELETE:
+            } // UPDATE
+            case DELETE -> {
                 // Checking if the card is in the inventory
                 if (!inventory.hasCard(name))
                     throw new IllegalArgumentException("Error, the card that is trying to be deleted is not in" +
                             " the inventory.");
+            } // DELETE
         } // switch
     } // parse
 

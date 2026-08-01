@@ -8,7 +8,7 @@ import entities.Customer;
  * Description: Customer Command to handle all actions related to CUSTOMER
  * Name: Nico Rotella
  * Date Created: July 29th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
@@ -58,7 +58,8 @@ public class CustomerCMD extends Command {
 
         // Checking if there is anything else
         if (tokens.length > 3) {
-            throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s.", line));
+            throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s.",
+                    tokens[0], tokens[1], tokens[2]));
         }
 
         // Checking if the action is possible

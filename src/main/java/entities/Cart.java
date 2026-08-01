@@ -10,7 +10,7 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
@@ -108,6 +108,15 @@ public class Cart {
         throw new IllegalArgumentException(String.format("Error, %s is not a product in cart.", name));
     }
 
+    /**
+     * Definition: Checks if a cart is empty
+     * Pre-Condition: items is initialized
+     * Post-Condition: A boolean is returned
+     * @return The boolean if the cart is empty
+     */
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
 
     /**
      * Description: Gives the string value of the cart, this is what is to be displayed in each customer. NOTE: starts with \n

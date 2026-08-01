@@ -2,24 +2,26 @@ package commands;
 
 import databases.*;
 import entities.Cart;
+import entities.Customer;
 import entities.products.Product;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * CheckoutCMD
  * Description: Checkout Command to handle checking out a customer
  * Name: Nico Rotella
  * Date Created: July 29th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
 public class CheckoutCMD extends Command {
 
     // Attributes
-    private String name;
+    private Customer customer;
 
 
     // Constructor
@@ -45,11 +47,13 @@ public class CheckoutCMD extends Command {
         }
 
         // Customer to be checked out
-        name = tokens[1];
-
-        // Checking that this customer is a shopper
-        if (!customers.isCustomerAShopper(name))
-            throw new IllegalArgumentException(String.format("Error, %s is not a shopper.", name));
+        // Check if customer name is actually a customer
+        try {
+            customer = customers.getCustomerByName(tokens[1]);
+        }
+        catch (NoSuchElementException e) {
+            throw new IllegalArgumentException("Error, this customer is not a shopper.");
+        }
 
         // Checking if there is anything else
         if (tokens.length > 2) {
@@ -67,14 +71,14 @@ public class CheckoutCMD extends Command {
     public void run() {
 
         // The cart of the customer being checked out
-        Cart c = customers.getCustomerByName(name).getCart();
+        Cart c = customer.getCart();
 
         // Purchasing cart
         try {
             inventory.purchaseCart(c);
 
             // Success
-            output = String.format("%s total %d", name, c.price());
+            output = String.format("%s total %d", customer.getName(), c.price());
             c.emptyCart();
         }
         catch (IllegalArgumentException e) {
