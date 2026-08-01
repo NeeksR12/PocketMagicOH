@@ -1,1 +1,211 @@
+CARD
+Name: Joker
+Element: +Mult
+Rarity: common
+Price: 2
+Stock: 999
+
+CARD
+Name: GreedyJoker
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: LustyJoker
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: WrathfulJoker
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: GluttonousJoker
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: JollyJoker
+Element: +Mult
+Rarity: common
+Price: 3
+Stock: 999
+
+CARD
+Name: ZanyJoker
+Element: +Mult
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: MadJoker
+Element: +Mult
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: CrazyJoker
+Element: +Mult
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: DrollJoker
+Element: +Mult
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: SlyJoker
+Element: +Chips
+Rarity: common
+Price: 3
+Stock: 999
+
+CARD
+Name: WilyJoker
+Element: +Chips
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: CleverJoker
+Element: +Chips
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: DeviousJoker
+Element: +Chips
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: CraftyJoker
+Element: +Chips
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: HalfJoker
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: JokerStencil
+Element: XMult
+Rarity: uncommon
+Price: 8
+Stock: 100
+
+CARD
+Name: FourFingers
+Element: Hand/Discards
+Rarity: uncommon
+Price: 7
+Stock: 100
+
+CARD
+Name: Mime
+Element: Retrigger/Copy
+Rarity: uncommon
+Price: 5
+Stock: 100
+
+CARD
+Name: CreditCard
+Element: Economy
+Rarity: common
+Price: 1
+Stock: 999
+
+CARD
+Name: CeremonialDagger
+Element: +Mult
+Rarity: uncommon
+Price: 6
+Stock: 100
+
+CARD
+Name: Banner
+Element: +Chips
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: MysticSummit
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: MarbleJoker
+Element: Creation
+Rarity: uncommon
+Price: 6
+Stock: 100
+
+CARD
+Name: LoyaltyCard
+Element: XMult
+Rarity: uncommon
+Price: 5
+Stock: 100
+
+CARD
+Name: 8Ball
+Element: Creation
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: Misprint
+Element: +Mult
+Rarity: common
+Price: 4
+Stock: 999
+
+CARD
+Name: Dusk
+Element: Retrigger/Copy
+Rarity: uncommon
+Price: 5
+Stock: 100
+
+CARD
+Name: RaisedFist
+Element: +Mult
+Rarity: common
+Price: 5
+Stock: 999
+
+CARD
+Name: ChaosTheClown
+Element: Economy
+Rarity: common
+Price: 4
+Stock: 999
+
 

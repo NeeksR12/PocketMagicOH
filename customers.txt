@@ -1,0 +1,14 @@
+jimbo
+Joker - 100
+
+nico
+SlyJoker - 5
+JollyJoker - 5
+
+fool
+LustyJoker - 1
+WrathfulJoker - 1
+GreedyJoker - 1
+GluttonousJoker - 1
+
+

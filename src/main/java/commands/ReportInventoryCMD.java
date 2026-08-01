@@ -1,6 +1,5 @@
 package commands;
 
-import entities.products.Card;
 import databases.*;
 import entities.products.Product;
 
@@ -9,7 +8,7 @@ import entities.products.Product;
  * Description: Command for reporting the inventory
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: July 28th, 2026
+ * Last Edited: August 1st, 2026
  */
 public class ReportInventoryCMD extends Command{
 
@@ -47,6 +46,7 @@ public class ReportInventoryCMD extends Command{
      */
     @Override
     public void run() {
+        sb.append("\nINVENTORY\n");
         if (inventory.hasStock()) {
             for (Product p : inventory.getInv()) {
                 sb.append(String.format("%s %d\n", p.getName(), p.getStock()));
