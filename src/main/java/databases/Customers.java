@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 1st, 2026
  */
 
 // Class
@@ -62,7 +62,7 @@ public class Customers {
      * @throws IllegalArgumentException if the customer is already a shopper
      */
     public void addShopper(Customer c) {
-        if (isCustomerAShopper(c.getName()))
+        if (!isCustomerAShopper(c.getName()))
             shoppers.add(c);
         else
             throw new IllegalArgumentException(String.format("Error, %s is already a shopper therefore cannot be added."

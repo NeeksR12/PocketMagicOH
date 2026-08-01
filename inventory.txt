@@ -10,6 +10,13 @@ Name: charizard
 Element: fire
 Rarity: epic
 Price: 5
+Stock: 7
+
+CARD
+Name: fool
+Element: chud
+Rarity: dumb
+Price: 0
 Stock: 2
 
 

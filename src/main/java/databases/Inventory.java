@@ -219,7 +219,7 @@ public class Inventory {
             Integer quantity = entry.getValue();
 
             // Checking if there is less stock than desired
-            if (product.getStock() <= quantity) {
+            if (product.getStock() < quantity) {
                 throw new IllegalArgumentException("Error, checkout could not be completed due to stock.");
             }
         }

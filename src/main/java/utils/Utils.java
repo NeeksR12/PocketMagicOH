@@ -11,8 +11,7 @@ package utils;
 public final class Utils {
 
     // Don't ever need an instance of this class
-    private Utils() {
-    }
+    private Utils() {}
 
     /**
      * Description: Checks if a string is also an int and returns a boolean result
