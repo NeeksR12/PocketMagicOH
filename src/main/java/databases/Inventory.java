@@ -2,8 +2,9 @@ package databases;
 
 
 import entities.Cart;
-import entities.products.Card;
+import entities.products.items.Card;
 import entities.products.Product;
+import entities.products.items.Item;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -207,25 +208,30 @@ public class Inventory {
     // General Class Operations
     /**
      * Description: Removes the stock from the inventory from the items in the given cart
-     * Pre-Condition: Desired quantities in cart should be greater than the stock of the product
+     * Pre-Condition: Desired quantities in cart should be greater than the stock of the product and cart is not null
      * Post-Condition: Stock is removed from inventory or exception is thrown
      * @param c The cart
      * @throws IllegalArgumentException if the cart desired more of a product than it is stocked
      */
     public void purchaseCart(Cart c) throws IllegalArgumentException {
+
+        // Checking that the cart is not null
+        if (c == null)
+            throw new IllegalArgumentException("Error, this cart is null.");
+
         // Checking stock availability
-        for (var entry : c.getItems().entrySet()) {
-            Product product = entry.getKey();
+        for (var entry : c.toItems().entrySet()) {
+            Item item = entry.getKey();
             Integer quantity = entry.getValue();
 
             // Checking if there is less stock than desired
-            if (product.getStock() < quantity) {
+            if (item.getStock() < quantity) {
                 throw new IllegalArgumentException("Error, checkout could not be completed due to stock.");
             }
         }
 
         // Sufficient stock, removing stock from inventory
-        for (var entry : c.getItems().entrySet()) {
+        for (var entry : c.toItems().entrySet()) {
             entry.getKey().removeStock(entry.getValue()); // Shouldn't throw since checked above
         }
     }

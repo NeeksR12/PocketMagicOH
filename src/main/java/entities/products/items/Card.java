@@ -1,5 +1,7 @@
-package entities.products;
+package entities.products.items;
 
+
+import entities.products.Product;
 
 /**
  * Card
@@ -10,7 +12,7 @@ package entities.products;
  */
 
 // Class
-public class Card implements Product {
+public class Card implements Item {
 
     // Attributes
     private final String name;
@@ -59,6 +61,7 @@ public class Card implements Product {
      * @param quantity The amount of stock to be removed
      * @throws IllegalArgumentException if quantity is greater stock
      */
+    @Override
     public void removeStock(Integer quantity) throws IllegalArgumentException {
         if (quantity > stock)
             throw new IllegalArgumentException("Error, cannot remove more stock than there is.");
@@ -67,6 +70,7 @@ public class Card implements Product {
     }
 
     // Getters
+    @Override
     public String getName() {
         return name;
     }
@@ -79,10 +83,12 @@ public class Card implements Product {
         return rarity;
     }
 
+    @Override
     public int getPrice() {
         return price;
     }
 
+    @Override
     public int getStock() {
         return stock;
     }

@@ -7,7 +7,7 @@ import java.util.Scanner;
 import commands.*;
 import databases.*;
 import entities.Customer;
-import entities.products.Card;
+import entities.products.items.Card;
 import entities.products.Product;
 import utils.*;
 

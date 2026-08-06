@@ -13,8 +13,6 @@ public interface Product {
 
     String getName();
     int getPrice();
-    int getStock();
-    void removeStock(Integer quantity) throws IllegalArgumentException;
     String toString();
 
 }

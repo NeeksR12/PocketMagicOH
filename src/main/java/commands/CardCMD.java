@@ -1,7 +1,7 @@
 package commands;
 
 import databases.*;
-import entities.products.Card;
+import entities.products.items.Card;
 import utils.Utils;
 
 import java.util.Arrays;

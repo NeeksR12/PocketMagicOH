@@ -86,7 +86,7 @@ public class CheckoutCMD extends Command {
             StringBuilder sb = new StringBuilder();
 
             // Checking which items were out of stock
-            for (var entry : c.getItems().entrySet()) {
+            for (var entry : c.getProducts().entrySet()) {
                 if (entry.getKey().getStock() <= entry.getValue()) {
                     insufficient.put(entry.getKey(), entry.getValue());
                 }
