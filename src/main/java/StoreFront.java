@@ -1,14 +1,13 @@
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import commands.*;
 import databases.*;
-import entities.Customer;
+import entities.products.Bundle;
 import entities.products.items.Card;
-import entities.products.Product;
 import utils.*;
 
 /**
@@ -22,11 +21,8 @@ import utils.*;
 // Class
 public final class StoreFront {
 
-    // Record for cart entries while parsing the customers
-    public record CartEntry(Product product, Integer quantity) {}
-
     // Enum
-    enum ProductType {CARD, BUNDLE, DECK}
+    enum ProductType {CARD, BUNDLE}
 
     // Static fields
     static Inventory inventory = new Inventory(); // Initialized in open store method
@@ -100,286 +96,259 @@ public final class StoreFront {
     } // Main
 
     /**
-     * Description: Fills the databases with what was stored in the text files
-     * Pre-Condition: Text files are accessible
-     * Post-Condition: Databases are set up
+     * Description:
+     * Pre-Condition:
+     * Post-Condition:
      */
     public static void openStore() {
-        // Inventory
-        try {
-            fillInventory();
-            fillCustomers();
-        }
-        catch (IllegalStateException e) {
-            System.out.println(e.getMessage());
-        }
+
+        // If they don't already exist, creating the tables in the database
+        createTables();
+
+        fillInventory();
+
+
+
+
     } // openStore
 
     /**
-     * Description: Adds all products to the inventory object that were stored in the text file
-     * Pre-Condition: inventory.txt is accessible
-     * Post-Condition: Inventory object has been filled with products
-     * @throws IllegalStateException if the inventory file was malformed
+     * Description: Creates the tables if they are not already in the .db file
+     * Pre-Condition: None
+     * Post-Condition: The .db file contains necessary tables
      */
-    public static void fillInventory() throws IllegalStateException {
+    private static void createTables() {
+        String url = "jdbc:sqlite:PocketMagicOH.db";
 
-        // Objects and Variables
-        FileReader fr = null;
-        Scanner sfr = null;
-        boolean success = false;
-        String line = "";
-        ProductType type;
+        // The sql code to update the tables
+        String sql = """
+                CREATE TABLE products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                type TEXT NOT NULL
+                );
+                
+                CREATE TABLE cards (
+                product_id INTEGER PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                element TEXT NOT NULL,
+                rarity TEXT NOT NULL,
+                price INTEGER NOT NULL CHECK (price > 0),
+                stock INTEGER NOT NULL CHECK (price >= 0),
+                FOREIGN KEY(product_id) REFERENCES products(id)
+                );
+                
+                CREATE TABLE bundles (
+                product_id INTEGER PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                FOREIGN KEY(product_id) REFERENCES products(id)
+                );
+                
+                CREATE TABLE bundle_items (
+                bundle_id INTEGER,
+                product_id INTEGER,
+                quantity INTEGER NOT NULL UNIQUE,
+                PRIMARY KEY(bundle_id, product_id),
+                FOREIGN KEY(bundle_id) REFERENCES bundles(product_id),
+                FOREIGN KEY(product_id) REFERENCES products(id)
+                );
+                """;
 
-        // Initializing fileIO objects
-        try {
-            fr = new FileReader("inventory.txt");
-            sfr = new Scanner(fr);
+        // Creating the tables
+        try (Connection conn = DriverManager.getConnection(url);
+             java.sql.Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
 
-            success = true;
+            stmt.execute(sql);
         }
-        catch (FileNotFoundException e) {
-            System.out.println("Issue finding the file.");
+        catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
+    }
 
-        if (success) { // Low security and won't work if file for some reason was not formatted right
-            while (sfr.hasNextLine()) {
-                line = sfr.nextLine().trim();
+    /**
+     * Description: Fills the inventory from all the info in the database
+     * Pre-Condition: None
+     * Post-Condition: Inventory object is filled
+     */
+    private static void fillInventory() {
 
-                // If not the spacing line
-                if (!line.isEmpty()) {
-                    // Determine product
-                    try {
-                        type = ProductType.valueOf(line);
-                    } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException("Error, the inventory file has been modified and does not " +
-                                "contain proper products.");
+        // Variables and objects
+        Map<Integer, String> products = new HashMap<Integer, String>();
+        ProductType productType;
+
+        // SQL
+        String url = "jdbc:sqlite:PocketMagicOH.db";
+
+        String sql = "SELECT id, type FROM products";
+
+        // Filling the inventory
+        try (Connection conn = DriverManager.getConnection(url);
+             java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            // Checking each product in the inventory
+            while (rs.next()) {
+                products.put(rs.getInt("id"), rs.getString("type"));
+            }
+
+            // Adding each product to the inventory
+            for (var entry : products.entrySet()) {
+                try {
+                    productType = ProductType.valueOf(entry.getValue());
+
+                    // Adding the product
+                    switch (productType) {
+                        case CARD -> inventory.addProduct(parseCard(entry.getKey()));
+                        case BUNDLE -> inventory.addProduct(parseBundle(entry.getKey()));
                     }
-
-                    // Create product
-                    switch (type) {
-                        case CARD -> {
-                            try {
-                                inventory.addProduct(parseCard(sfr));
-                            }
-                            catch (IllegalStateException e) {
-                                throw new IllegalStateException(e);
-                            }
-                        }
-                    } // Switch type
-                } // If line not empty
-            } // While parsing
-        } // Successful file reader
+                }
+                catch (IllegalArgumentException e) {
+                    System.out.println("Error, invalid product type in database.");
+                }
+                catch (RuntimeException e) { // Also catches the NoSuchElementException
+                    System.out.println(e.getMessage());
+                }
+            } // For each product
+        } // Filling the inventory
+        catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
     } // fillInventory
 
     /**
-     * Description: Adds a card to the inventory object from the text file
-     * Pre-Condition: Scanner param must be the scanner being used to scan the file. It must have already scanned the
-     * line that says CARD and be on to the next line with the fields.
-     * Post-Condition: Scanner is advanced to empty line, card has been created and added to the inventory
-     * @param sfr The scanner object scanning inventory.txt
-     * @return The card that has been parsed and created
-     * @throws IllegalStateException if the file is malformed
+     * Description: Returns a card object from its product id
+     * Pre-Condition: Param should be a valid id in the cards list and database is formatted correctly
+     * Post-Condition: The card is returned
+     * @param product_id The id of the card
+     * @return The card object that was created
+     * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
+     * @throws RuntimeException if the sql is not successful.
      */
-    public static Card parseCard(Scanner sfr) throws IllegalStateException {
+    private static Card parseCard(Integer product_id) {
+        String url = "jdbc:sqlite:PocketMagicOH.db";
 
-        // Variables and objects
-        String line;
-        Map<String, String> fields = new HashMap<>();
-        int price, stock; // Need to convert the string from the map to an int later
+        String sql = String.format("""
+                SELECT * FROM cards
+                WHERE product_id = %d""", product_id);
 
-        // Gathering fields
-        for (int i = 0; i < 5; i++) {
-            line = sfr.nextLine();
+        // Reading the card
+        try (Connection conn = DriverManager.getConnection(url);
+             java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
 
-            if (line.contains(": ")) {
-                String[] parts = line.split(": ", 2);
-                fields.put(parts[0], parts[1]);
-            }
-            else {
-                throw new IllegalStateException("Error, inventory file not formatted correctly.");
+            // No rows found, should never get here
+            if (!rs.next()) {
+                throw new NoSuchElementException(String.format("Error, card with product_id %d not found.", product_id));
             }
 
-        }
-
-        // Verifying fields
-        price = Utils.isNumeric(fields.get("Price")) // Checks if numeric and then gives int value
-                ? Integer.parseInt(fields.get("Price"))
-                : 0;
-
-        stock = Utils.isNumeric(fields.get("Stock"))
-                ? Integer.parseInt(fields.get("Stock"))
-                : 0;
-
-        if (!(fields.get("Name") == null || fields.get("Element") == null || fields.get("Rarity") == null))
+            // Returning the card
             return new Card(
-                    fields.get("Name"),
-                    fields.get("Element"),
-                    fields.get("Rarity"),
-                    price,
-                    stock
+                    rs.getString("name"),
+                    rs.getString("element"),
+                    rs.getString("rarity"),
+                    rs.getInt("price"),
+                    rs.getInt("stock")
             );
-        else
-            throw new IllegalStateException("Error, inventory file not formatted correctly.");
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching card", e);
+        }
     }
 
     /**
-     * Description: Adds all customers to the customers object that were stored in the text file
-     * Pre-Condition: Must be called after the inventory is filled and customers.txt is accessible
-     * Post-Condition: Customers object has been filled with customers
-     * @throws IllegalStateException if the file was malformed
+     * Description: Returns a bundle object from its product id
+     * Pre-Condition: Param should be a valid id in the bundle list and database is formatted correctly
+     * Post-Condition: The bundle is returned
+     * @param product_id The id of the bundle
+     * @return The bundle object that was created
+     * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
+     * @throws RuntimeException if the sql is not successful.
      */
-    public static void fillCustomers() {
+    private static Bundle parseBundle(Integer product_id) {
 
-        // Objects and Variables
-        FileReader fr = null;
-        Scanner sfr = null;
-        boolean success = false;
-        String line = "";
+        // Variables and object
+        Bundle bundle;
+        int subProduct_id, quantity;
+        ProductType productType;
 
-        // Initializing fileIO objects
-        try {
-            fr = new FileReader("customers.txt");
-            sfr = new Scanner(fr);
+        // SQL
+        String url = "jdbc:sqlite:PocketMagicOH.db";
 
-            success = true;
-        }
-        catch (FileNotFoundException e) {
-            System.out.println("Issue finding the file.");
-        }
+        String sqlGetBundle = String.format("""
+                SELECT name FROM bundles
+                WHERE product_id = %d""", product_id);
 
-        if (success) { // Low security and won't work if file for some reason was not formatted right
-            while (sfr.hasNextLine()) {
-                line = sfr.nextLine().trim();
+        String sqlGetProducts = String.format("""
+                SELECT * FROM bundle_items
+                WHERE bundle_id = %d""", product_id);
 
-                // If not the spacing line
-                if (!line.isEmpty()) {
-                    customers.addShopper(parseCustomer(line, sfr));
+        String sqlGetProductType = """
+                SELECT type FROM products
+                WHERE id = ?"""; // Not complete statement, needs id number
+
+
+        // Establishing the connection
+        try (Connection conn = DriverManager.getConnection(url)) {
+
+            // Getting the bundle
+            try (java.sql.Statement stmtGetBundle = conn.createStatement();
+                 java.sql.ResultSet rsGetBundle = stmtGetBundle.executeQuery(sqlGetBundle)) {
+
+                // No rows found, should never get here
+                if (!rsGetBundle.next()) {
+                    throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
                 }
+
+                // Creating the bundle
+                bundle = new Bundle(rsGetBundle.getString("name"));
+
             }
+
+            // Getting the products in the bundle
+            try (java.sql.Statement stmtGetProducts = conn.createStatement();
+                 java.sql.ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
+
+                // Each product
+                while (rsGetProducts.next()) {
+
+                    subProduct_id = rsGetProducts.getInt("product_id");
+                    quantity = rsGetProducts.getInt("quantity");
+
+                    // Getting the product type
+                    try (java.sql.PreparedStatement pstmtGetProductType = conn.prepareStatement(sqlGetProductType)) {
+                         pstmtGetProductType.setInt(1, subProduct_id);
+
+                        // Result of getting the product type
+                        try (java.sql.ResultSet rsGetProductType = pstmtGetProductType.executeQuery()) {
+
+                            // No rows found, should never get here
+                            if (!rsGetProductType.next()) {
+                                throw new NoSuchElementException(String.format(
+                                        "Error, product in bundle %d with product_id %d not found.",
+                                        product_id, subProduct_id));
+                            }
+
+                            // Adding the product to the bundle
+                            // (Don't need try/catch '.' exception will be caught in fillInventory)
+                            productType = ProductType.valueOf(rsGetProductType.getString("type"));
+
+                            // Adding the product
+                            switch (productType) {
+                                case CARD -> bundle.add(parseCard(subProduct_id), quantity);
+                                case BUNDLE -> bundle.add(parseBundle(subProduct_id), quantity);
+                            }
+                        } // Product type result
+                    } // Product type check
+                } // While product in bundle
+            } // Getting the products in the bundle
+
+            // Bundle complete
+            return bundle;
+
+        } // Opening the connection
+        catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-    } // Fill Customers
-
-    /**
-     * Description: Takes the name of the customer and the scanner parsing the customers file and adds their cart
-     * Pre-Condition: The scanner param must be the scanner parsing the customer file and must have scanned their name
-     * meaning the next line is the first cart entry
-     * Post-Condition: The customer is created and the cart is added
-     * @param name The name of the customer scanned from the file
-     * @param sfr The scanner parsing customers.txt
-     * @return The customer
-     * @throws IllegalStateException if the file is malformed
-     */
-    public static Customer parseCustomer(String name, Scanner sfr){
-        // Creating the customer
-        Customer c = new Customer(name);
-
-        // Adding their cart
-        while (sfr.hasNextLine()) {
-            String line = sfr.nextLine().trim();
-
-            if (line.isEmpty())
-                break;
-
-            var entry = parseCartEntry(line); // If this throws, it will exit this method to and be caught above
-            c.getCart().add(entry.product(), entry.quantity());
-        }
-
-        return c;
-    }
-
-    /**
-     * Description: Parses a line that is a cart entry string and returns the cart entry as objects
-     * Pre-Condition: Line should be a cart entry string from the text file
-     * Post-Condition: CartEntry is returned or exception is thrown
-     * @param line The cart entry string from the parser
-     * @return The CartEntry
-     * @throws IllegalStateException if the cart entry string is malformed
-     */
-    public static CartEntry parseCartEntry(String line) throws IllegalStateException {
-        // Checking if the line was formated correctly
-        if (!line.contains(" - "))
-            throw new IllegalStateException("Error, customers file not formatted correctly.");
-
-        String[] parts = line.split(" - ", 2);
-
-        String productName = parts[0];
-        String quantityStr = parts[1];
-
-        // Checking that the product and quantity are valid
-        if (!inventory.hasProduct(productName) || !Utils.isNumeric(quantityStr))
-            throw new IllegalStateException("Error, customer's cart malformed.");
-
-        Product p = inventory.getProductByName(productName);
-        int qty = Integer.parseInt(quantityStr);
-
-        return new CartEntry(p, qty);
-    }
-
-    /**
-     * Description: Fills the text files with what was stored in the databases
-     * Pre-Condition: Databases are initialized
-     * Post-Condition: Text files are updated
-     */
-    public static void closeStore() {
-        updateInventoryFile();
-        updateCustomersFile();
-    }
-
-    /**
-     * Description: Updates the text file containing the inventory
-     * Pre-Condition: Inventory object is declared and initialized
-     * Post-Condition: inventory.txt is updated
-     */
-    public static void updateInventoryFile() {
-
-        // Variables and Objects
-        FileWriter fw = null;
-        PrintWriter pw = null;
-        boolean success = false;
-
-        try {
-            fw = new FileWriter("inventory.txt");
-            pw = new PrintWriter(fw);
-
-            success = true;
-        }
-        catch (IOException e) {
-            System.out.println("Issue updating the inventory, could not access the file.");
-        }
-
-        if (success) {
-            pw.println(inventory.toString());
-            pw.close();
-        }
-    }
-
-    /**
-     * Description: Updates the text file containing the customers
-     * Pre-Condition: Customers object is declared and initialized
-     * Post-Condition: customer.txt is updated
-     */
-    public static void updateCustomersFile() {
-
-        // Variables and Objects
-        FileWriter fw = null;
-        PrintWriter pw = null;
-        boolean success = false;
-
-        try {
-            fw = new FileWriter("customers.txt");
-            pw = new PrintWriter(fw);
-
-            success = true;
-        }
-        catch (IOException e) {
-            System.out.println("Issue updating the customers, could not access the file.");
-        }
-
-        if (success) {
-            pw.println(customers.toString());
-            pw.close();
-        }
-    }
+    } // parseBundle
 
     /**
      * Description: Creates a command object for the type of command run and adds it to the command list
@@ -400,7 +369,8 @@ public final class StoreFront {
             try {
                 CommandType type = CommandType.valueOf(keyword); // Enum value check for keyword
                 commands.add(type.create(input, inventory, customers));
-            } catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e) {
                 commands.add(new InvalidCMD(input, inventory, customers));
             }
         }
