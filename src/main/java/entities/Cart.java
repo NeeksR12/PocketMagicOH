@@ -1,6 +1,6 @@
 package entities;
 
-import entities.products.Expandable;
+import entities.products.ProductGroup;
 import entities.products.Product;
 import entities.products.items.Item;
 
@@ -12,11 +12,11 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 8th, 2026
  */
 
 // Class
-public class Cart implements Expandable {
+public class Cart implements ProductGroup {
 
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
@@ -32,7 +32,7 @@ public class Cart implements Expandable {
      * @param product The product being added to the cart
      * @param quantity The quantity of the product being added to the cart
      */
-    public void addToCart(Product product, Integer quantity) {
+    public void add(Product product, Integer quantity) {
         products.merge(product, quantity, Integer::sum);
     }
     
@@ -43,7 +43,7 @@ public class Cart implements Expandable {
      * @param product The product being removed from the cart
      * @param quantity The quantity of the product being removed from the cart
      */
-    public void removeFromCart(Product product, Integer quantity) {
+    public void remove(Product product, Integer quantity) {
         // Taking that product out of their cart
         products.computeIfPresent(product, (k, v) -> v - quantity);
         // If the product has no more quantity, removing it from their cart
@@ -52,11 +52,21 @@ public class Cart implements Expandable {
     }
 
     /**
+     * Description: Deletes a product from the cart entirely
+     * Pre-Condition: Param is a product
+     * Post-Condition: The cart has this product deleted from it
+     * @param product The product being deleted
+     */
+    public void delete(Product product) {
+        products.remove(product);
+    }
+
+    /**
      * Description: Empties the cart
      * Pre-Condition: None
      * Post-Condition: The cart is cleared and has zero products
      */
-    public void emptyCart() {
+    public void empty() {
         products.clear();
     }
 
@@ -136,8 +146,8 @@ public class Cart implements Expandable {
                 items.merge(item, quantity, Integer::sum);
             }
             // Collapsing the product into its items
-            else if (product instanceof Expandable expandable) {
-                for (var subEntry : expandable.toItems().entrySet()) {
+            else if (product instanceof ProductGroup productGroup) {
+                for (var subEntry : productGroup.toItems().entrySet()) {
                     items.merge(subEntry.getKey(), subEntry.getValue() * quantity, Integer::sum);
                 }
             }

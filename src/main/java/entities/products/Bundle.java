@@ -10,11 +10,11 @@ import java.util.Map;
  * Description: A collection of other products that are sold together in a pre-determined group
  * Name: Nico Rotella
  * Date Created: August 5th, 2026
- * Last Edited: August 5th, 2026
+ * Last Edited: August 8th, 2026
  */
 
 // Class
-public class Bundle implements Product, Expandable {
+public class Bundle implements Product, ProductGroup {
     
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
@@ -34,11 +34,9 @@ public class Bundle implements Product, Expandable {
      * @param product The product being added to the bundle
      * @param quantity The quantity of the product being added to the bundle
      */
-    public void addToBundle(Product product, Integer quantity) {
-        // This product is already in the bundle
-        products.computeIfPresent(product, (k, v) -> v + quantity);
-        // This product was not in the bundle
-        products.putIfAbsent(product, quantity);
+    @Override
+    public void add(Product product, Integer quantity) {
+        products.merge(product, quantity, Integer::sum);
     }
 
     /**
@@ -48,7 +46,8 @@ public class Bundle implements Product, Expandable {
      * @param product The product being removed from the bundle
      * @param quantity The quantity of the product being removed from the bundle
      */
-    public void removeFromBundle(Product product, Integer quantity) {
+    @Override
+    public void remove(Product product, Integer quantity) {
         // Taking that product out of their bundle
         products.computeIfPresent(product, (k, v) -> v - quantity);
         // If the product has no more quantity, removing it from their bundle
@@ -57,11 +56,23 @@ public class Bundle implements Product, Expandable {
     }
 
     /**
+     * Description: Deletes a product from the bundle entirely
+     * Pre-Condition: Param is a product
+     * Post-Condition: The bundle has this product deleted from it
+     * @param product The product being deleted
+     */
+    @Override
+    public void delete(Product product) {
+        products.remove(product);
+    }
+
+    /**
      * Description: Empties the bundle
      * Pre-Condition: None
      * Post-Condition: The bundle is cleared and has zero products
      */
-    public void emptyBundle() {
+    @Override
+    public void empty() {
         products.clear();
     }
 
@@ -72,6 +83,7 @@ public class Bundle implements Product, Expandable {
      * @param name The name of the product
      * @return The boolean if found
      */
+    @Override
     public boolean hasProduct(String name) {
         for (Product p : products.keySet()) {
             if (p.getName().equals(name))
@@ -88,6 +100,7 @@ public class Bundle implements Product, Expandable {
      * @return The quantity of the product in the bundle
      * @throws IllegalArgumentException if there is no product with that name in the bundle
      */
+    @Override
     public Integer quantityOf(String name) throws IllegalArgumentException {
         for (var entry : products.entrySet()) {
             if (entry.getKey().getName().equals(name))
@@ -102,6 +115,7 @@ public class Bundle implements Product, Expandable {
      * Post-Condition: A boolean is returned
      * @return The boolean if the bundle is empty
      */
+    @Override
     public boolean isEmpty() {
         return products.isEmpty();
     }
@@ -143,13 +157,30 @@ public class Bundle implements Product, Expandable {
                 items.merge(item, quantity, Integer::sum);
             }
             // Collapsing the product into its items
-            else if (product instanceof Expandable expandable) {
-                for (var subEntry : expandable.toItems().entrySet()) {
+            else if (product instanceof ProductGroup productGroup) {
+                for (var subEntry : productGroup.toItems().entrySet()) {
                     items.merge(subEntry.getKey(), subEntry.getValue() * quantity, Integer::sum);
                 }
             }
         }
         return items;
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("BUNDLE");
+        sb.append(String.format("\nName: %s", name));
+
+        for (var entry : products.entrySet())
+            sb.append(String.format("\n%s - %d", entry.getKey().getName(), entry.getValue()));
+
+        return sb.toString();
     }
 
     // Getters

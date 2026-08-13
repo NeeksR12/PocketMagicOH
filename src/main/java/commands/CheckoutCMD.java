@@ -79,7 +79,7 @@ public class CheckoutCMD extends Command {
 
             // Success
             output = String.format("%s total %d", customer.getName(), c.price());
-            c.emptyCart();
+            c.empty();
         }
         catch (IllegalArgumentException e) {
             Map<Product, Integer> insufficient = new HashMap<Product, Integer>();

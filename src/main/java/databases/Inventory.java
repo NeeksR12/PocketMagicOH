@@ -2,6 +2,7 @@ package databases;
 
 
 import entities.Cart;
+import entities.products.ProductGroup;
 import entities.products.items.Card;
 import entities.products.Product;
 import entities.products.items.Item;
@@ -14,7 +15,7 @@ import java.util.NoSuchElementException;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 8th, 2026
  */
 public class Inventory {
 
@@ -79,10 +80,27 @@ public class Inventory {
      * @throws IllegalArgumentException if the product is not in the inventory
      */
     public void removeProductByName(String name) throws IllegalArgumentException {
-        if (hasProduct(name))
-            inv.remove(getProductByName(name));
-        else
+
+        // Variables
+        Product product;
+
+        // Checking if this is a valid product
+        try { // Contains product
+            product = getProductByName(name);
+        }
+        catch (NoSuchElementException e) { // Did not contain product
             throw new IllegalArgumentException("Error, this product is not in the inventory therefore cannot be removed");
+        }
+
+        // Removing the Product from any other product that may contain it
+        for (Product p: inv) {
+            if (p instanceof ProductGroup pc && pc.hasProduct(name))
+                pc.delete(product);
+        }
+
+        // Removing the product itself from the inventory
+        inv.remove(getProductByName(name));
+
     }
 
 

@@ -155,7 +155,6 @@ public class CartCMD extends Command {
         } // Switch action
     }
 
-
     /**
      * Description: Actually runs the command, updating as required and setting output
      * Pre-Condition: Parse has been run on this command
@@ -178,7 +177,7 @@ public class CartCMD extends Command {
      */
     private void add() {
         for (var entry : updates.entrySet()) {
-            customer.getCart().addToCart(inventory.getProductByName(entry.getKey()),
+            customer.getCart().add(inventory.getProductByName(entry.getKey()),
                     Integer.parseInt(entry.getValue()));
         }
         output = String.format("%s cart updated", customer.getName());
@@ -191,7 +190,7 @@ public class CartCMD extends Command {
      */
     private void remove() {
         for (var entry : updates.entrySet()) {
-            customer.getCart().removeFromCart(inventory.getProductByName(entry.getKey()),
+            customer.getCart().remove(inventory.getProductByName(entry.getKey()),
                     Integer.parseInt(entry.getValue()));
         }
         output = String.format("%s cart updated", customer.getName());
@@ -203,7 +202,7 @@ public class CartCMD extends Command {
      * Post-Condition: The cart has been cleared and the output has been set
      */
     private void clear() {
-        customer.getCart().emptyCart();
+        customer.getCart().empty();
         output = String.format("%s cart cleared", customer.getName());
     }
 

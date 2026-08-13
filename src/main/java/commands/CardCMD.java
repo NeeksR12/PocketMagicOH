@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * Description: Card Command to handle all actions related to card
  * Name: Nico Rotella
  * Date Created: May 6th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 8th, 2026
  */
 public class CardCMD extends Command {
 
@@ -175,6 +175,7 @@ public class CardCMD extends Command {
      */
     private void delete() {
         inventory.removeProductByName(name);
+        customers.deleteProductFromAllCarts(inventory.getCardByName(name));
         output = String.format("card %s deleted", name);
     }
 

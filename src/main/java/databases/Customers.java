@@ -1,6 +1,7 @@
 package databases;
 
 import entities.Customer;
+import entities.products.Product;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -10,7 +11,7 @@ import java.util.NoSuchElementException;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 8th, 2026
  */
 
 // Class
@@ -82,6 +83,18 @@ public class Customers {
         else
             throw new IllegalArgumentException(String.format("Error, %s is not a shopper therefore cannot be removed.",
                     name));
+    }
+
+    /**
+     * Description: Deletes a product from all customers carts. Only to be used if the product itself is being deleted
+     * Pre-Condition: Param must be a product and customers is initialized
+     * Post-Condition: The product is deleted from every cart
+     * @param product The product
+     */
+    public void deleteProductFromAllCarts(Product product) {
+        for (Customer c : shoppers) {
+            c.getCart().delete(product);
+        }
     }
 
     /**

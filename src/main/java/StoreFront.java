@@ -160,7 +160,8 @@ public final class StoreFront {
                         case CARD -> {
                             try {
                                 inventory.addProduct(parseCard(sfr));
-                            } catch (IllegalStateException e) {
+                            }
+                            catch (IllegalStateException e) {
                                 throw new IllegalStateException(e);
                             }
                         }
@@ -280,7 +281,7 @@ public final class StoreFront {
                 break;
 
             var entry = parseCartEntry(line); // If this throws, it will exit this method to and be caught above
-            c.getCart().addToCart(entry.product(), entry.quantity());
+            c.getCart().add(entry.product(), entry.quantity());
         }
 
         return c;
