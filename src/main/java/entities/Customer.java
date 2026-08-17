@@ -6,7 +6,7 @@ package entities;
  * Description: A customer object which can hold a cart to purchase items
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 17th, 2026
  */
 
 // Class
@@ -14,7 +14,7 @@ public class Customer {
 
     // Attributes
     private final String name;
-    private final Cart cart = new Cart();
+    private Cart cart = new Cart();
 
     // Constructor
     public Customer(String n) {
@@ -39,5 +39,10 @@ public class Customer {
 
     public Cart getCart() {
         return cart;
+    }
+
+    // Setter
+    public void setCart(Cart c) {
+        cart = c;
     }
 }

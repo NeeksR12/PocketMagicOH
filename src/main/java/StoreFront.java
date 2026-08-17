@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 import commands.*;
 import databases.*;
+import entities.Cart;
+import entities.Customer;
 import entities.products.Bundle;
 import entities.products.items.Card;
 import utils.*;
@@ -96,9 +98,9 @@ public final class StoreFront {
     } // Main
 
     /**
-     * Description:
-     * Pre-Condition:
-     * Post-Condition:
+     * Description: Takes all the info stored in the databases and saves them to their objects
+     * Pre-Condition: None
+     * Post-Condition: The objects are set up
      */
     public static void openStore() {
 
@@ -106,10 +108,7 @@ public final class StoreFront {
         createTables();
 
         fillInventory();
-
-
-
-
+        fillCustomers();
     } // openStore
 
     /**
@@ -146,9 +145,29 @@ public final class StoreFront {
                 CREATE TABLE bundle_items (
                 bundle_id INTEGER,
                 product_id INTEGER,
-                quantity INTEGER NOT NULL UNIQUE,
+                quantity INTEGER NOT NULL,
                 PRIMARY KEY(bundle_id, product_id),
                 FOREIGN KEY(bundle_id) REFERENCES bundles(product_id),
+                FOREIGN KEY(product_id) REFERENCES products(id)
+                );
+                
+                CREATE TABLE customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+                );
+                
+                CREATE TABLE carts (
+                cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL UNIQUE,
+                FOREIGN KEY(customer_id) REFERENCES customers(id)
+                );
+                
+                CREATE TABLE cart_items (
+                cart_id INTEGER,
+                product_id INTEGER,
+                quantity INTEGER NOT NULL,
+                PRIMARY KEY(cart_id, product_id),
+                FOREIGN KEY(cart_id) REFERENCES carts(cart_id),
                 FOREIGN KEY(product_id) REFERENCES products(id)
                 );
                 """;
@@ -349,6 +368,170 @@ public final class StoreFront {
             throw new RuntimeException(e);
         }
     } // parseBundle
+
+    /**
+     * Description: Fills the customers from all the info in the database
+     * Pre-Condition: None
+     * Post-Condition: Customers object is filled
+     */
+    private static void fillCustomers() {
+
+        // Variables and objects
+        Map<Integer, String> customers = new HashMap<Integer, String>();
+
+        // SQL
+        String url = "jdbc:sqlite:PocketMagicOH.db";
+
+        String sql = "SELECT id, name FROM customers";
+
+        // Filling the customers
+        try (Connection conn = DriverManager.getConnection(url);
+             java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            // Checking each customer in the list
+            while (rs.next()) {
+                customers.put(rs.getInt("id"), rs.getString("name"));
+            }
+
+            // Adding each customer to the customers and setting their cart
+            for (var entry : customers.entrySet()) {
+
+                // Local loop variables and objects
+                int id = entry.getKey();
+                String name = entry.getValue();
+
+                // This customer
+                Customer c = new Customer(name);
+
+                // Filling their cart
+                try {
+                    c.setCart(fillCarts(id));
+                }
+                catch (IllegalArgumentException e) { // Catches a bad product type enum
+                    System.out.println("Error, invalid product type in database.");
+                }
+                catch (RuntimeException e) { // Also catches the NoSuchElementException, from parseCard/Bundle
+                    System.out.println(e.getMessage());
+                }
+            } // For each customer
+        } // Filling the customers
+        catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    } // fillCustomers
+
+    /**
+     * Description: Fills the cart objects a customer has using the customer id
+     * Pre-Condition: Param should be a valid id in the customers list and database is formated correctly
+     * Post-Condition: The cart is returned (To be updated if more carts per customer)
+     * @param customer_id The id number of the customer
+     * @return The cart object that was created
+     * @throws RuntimeException if the sql is not successful.
+     */
+    private static Cart fillCarts(int customer_id) {
+
+        // Variables and objects
+        List<Integer> cart_ids = new ArrayList<Integer>(); // Modular for later
+        List<Cart> carts = new ArrayList<Cart>();
+        int product_id, quantity;
+        ProductType productType;
+        Cart cart;
+
+        // SQL
+        String url = "jdbc:sqlite:PocketMagicOH.db";
+
+        String sqlGetCarts = String.format("""
+                SELECT cart_id FROM carts
+                WHERE customer_id = %d""", customer_id);
+
+        String sqlGetProducts = """
+                SELECT * FROM cart_items
+                WHERE cart_id = ?"""; // Not complete statement, needs cart_id number
+
+        String sqlGetProductType = """
+                SELECT type FROM products
+                WHERE id = ?"""; // Not complete statement, needs id number
+
+
+
+        // Establishing the connection
+        try (Connection conn = DriverManager.getConnection(url)) {
+
+            // Getting the carts
+            try (java.sql.Statement stmtGetCarts = conn.createStatement();
+                 java.sql.ResultSet rsGetCarts = stmtGetCarts.executeQuery(sqlGetCarts)) {
+
+                // No rows found
+                if (!rsGetCarts.next()) {
+                    return new Cart(); // Customer doesn't have a cart so they have their cart empty
+                }
+
+                // They have cart(s)
+                do {
+                    cart_ids.add(rsGetCarts.getInt("cart_id"));
+                } while (rsGetCarts.next());
+            }
+
+            // Getting the products in each cart
+            for (Integer cart_id : cart_ids) {
+
+                cart = new Cart();
+
+                // Getting the product itself
+                try (java.sql.PreparedStatement pstmtGetProducts = conn.prepareStatement(sqlGetProducts)) {
+                    pstmtGetProducts.setInt(1, cart_id);
+
+                    // Result of getting the products for that cart
+                    try (java.sql.ResultSet rsGetProducts = pstmtGetProducts.executeQuery()) {
+
+                        // Each product in the cart
+                        while (rsGetProducts.next()) {
+
+                            product_id = rsGetProducts.getInt("product_id");
+                            quantity = rsGetProducts.getInt("quantity");
+
+                            // Getting the product type
+                            try (java.sql.PreparedStatement pstmtGetProductType = conn.prepareStatement(sqlGetProductType)) {
+                                pstmtGetProductType.setInt(1, product_id);
+
+                                // Result of getting the product type
+                                try (java.sql.ResultSet rsGetProductType = pstmtGetProductType.executeQuery()) {
+
+                                    // No rows found, should never get here
+                                    if (!rsGetProductType.next()) {
+                                        throw new NoSuchElementException(String.format(
+                                                "Error, product in cart %d with product_id %d not found.",
+                                                cart_id, product_id));
+                                    }
+
+                                    // Adding the product to the bundle
+                                    // (Don't need try/catch '.' exception will be caught in fillCustomers)
+                                    productType = ProductType.valueOf(rsGetProductType.getString("type"));
+
+                                    // Adding the product
+                                    switch (productType) {
+                                        case CARD -> cart.add(parseCard(product_id), quantity);
+                                        case BUNDLE -> cart.add(parseBundle(product_id), quantity);
+                                    }
+                                } // Product type result
+                            } // Product type check
+                        } // While product in cart
+                    } // Result of getting the products in the cart
+                } // Getting the products in that cart
+
+                // Adding the filled cart
+                carts.add(cart);
+
+            } // For each cart the customer has
+
+            return carts.getFirst();
+
+        } // Opening the connection
+        catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching cart", e);
+        }
+    } // fillCarts
 
     /**
      * Description: Creates a command object for the type of command run and adds it to the command list
