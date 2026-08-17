@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 public class Inventory {
 
     // Attributes
-    private final ArrayList<Product> inv = new ArrayList<Product>();
+    private final ArrayList<Product> inv = new ArrayList<Product>(); // Product id is array index +1
 
     // Constructor
     public Inventory() {}
@@ -56,6 +56,17 @@ public class Inventory {
                 return p; // Found
         }
         throw new NoSuchElementException("Error, this product is not in the inventory."); // Not found
+    }
+
+    /**
+     * Description: Returns a product by its id
+     * Pre-Condition: Param is an int and should be between 1 and inv.length()
+     * Post-Condition: The product is returned
+     * @param id The product id
+     * @return The product
+     */
+    public Product getProductById(int id) {
+        return inv.get(id - 1);
     }
 
     /**

@@ -9,6 +9,7 @@ import databases.*;
 import entities.Cart;
 import entities.Customer;
 import entities.products.Bundle;
+import entities.products.Product;
 import entities.products.items.Card;
 import utils.*;
 
@@ -38,9 +39,7 @@ public final class StoreFront {
         // Objects and variables
         Scanner s = new Scanner(System.in);
         StringBuilder sb = new StringBuilder();
-        String input = "";
-        String command = "";
-        String output = "";
+        String input, command, output;
 
 
         // Filling the inventory array list with cards
@@ -93,7 +92,7 @@ public final class StoreFront {
         System.out.println(output);
 
         // Updating the text files
-        closeStore();
+        //closeStore();
 
     } // Main
 
@@ -104,79 +103,91 @@ public final class StoreFront {
      */
     public static void openStore() {
 
-        // If they don't already exist, creating the tables in the database
-        createTables();
+        // SQL
+        String url = "jdbc:sqlite:PocketMagicOH.db";
 
-        fillInventory();
-        fillCustomers();
+        try (Connection conn = DriverManager.getConnection(url)) {
+            // If they don't already exist, creating the tables in the database
+            createTables(conn);
+
+            fillInventory(conn);
+            fillCustomers(conn);
+        }
+        catch (SQLException e) {
+            System.out.printf("""
+                    Error connecting to the database.
+                    Error message: %s
+                    """, e.getMessage());
+        }
+
     } // openStore
 
     /**
      * Description: Creates the tables if they are not already in the .db file
-     * Pre-Condition: None
+     * Pre-Condition: Connection has been passed properly
      * Post-Condition: The .db file contains necessary tables
+     * @param conn The connection to the database
      */
-    private static void createTables() {
-        String url = "jdbc:sqlite:PocketMagicOH.db";
-
+    private static void createTables(Connection conn) {
         // The sql code to update the tables
-        String sql = """
-                CREATE TABLE products (
+        String[] sqlCreateTables = {
+                """
+                CREATE TABLE IF NOT EXISTS products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 type TEXT NOT NULL
-                );
-                
-                CREATE TABLE cards (
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS cards (
                 product_id INTEGER PRIMARY KEY,
                 name TEXT UNIQUE NOT NULL,
                 element TEXT NOT NULL,
                 rarity TEXT NOT NULL,
                 price INTEGER NOT NULL CHECK (price > 0),
-                stock INTEGER NOT NULL CHECK (price >= 0),
+                stock INTEGER NOT NULL CHECK (stock >= 0),
                 FOREIGN KEY(product_id) REFERENCES products(id)
-                );
-                
-                CREATE TABLE bundles (
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS bundles (
                 product_id INTEGER PRIMARY KEY,
                 name TEXT UNIQUE NOT NULL,
                 FOREIGN KEY(product_id) REFERENCES products(id)
-                );
-                
-                CREATE TABLE bundle_items (
+                )""",
+                """                
+                CREATE TABLE IF NOT EXISTS bundle_items (
                 bundle_id INTEGER,
                 product_id INTEGER,
                 quantity INTEGER NOT NULL,
                 PRIMARY KEY(bundle_id, product_id),
                 FOREIGN KEY(bundle_id) REFERENCES bundles(product_id),
                 FOREIGN KEY(product_id) REFERENCES products(id)
-                );
-                
-                CREATE TABLE customers (
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS customers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
-                );
-                
-                CREATE TABLE carts (
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS carts (
                 cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL UNIQUE,
                 FOREIGN KEY(customer_id) REFERENCES customers(id)
-                );
-                
-                CREATE TABLE cart_items (
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS cart_items (
                 cart_id INTEGER,
                 product_id INTEGER,
                 quantity INTEGER NOT NULL,
                 PRIMARY KEY(cart_id, product_id),
                 FOREIGN KEY(cart_id) REFERENCES carts(cart_id),
                 FOREIGN KEY(product_id) REFERENCES products(id)
-                );
-                """;
+                )"""
+        };
 
         // Creating the tables
-        try (Connection conn = DriverManager.getConnection(url);
-             java.sql.Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
-
-            stmt.execute(sql);
+        try (java.sql.Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
+            for (String sqlCreateTable : sqlCreateTables) {
+                stmt.execute(sqlCreateTable);
+            }
         }
         catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -185,49 +196,68 @@ public final class StoreFront {
 
     /**
      * Description: Fills the inventory from all the info in the database
-     * Pre-Condition: None
+     * Pre-Condition: Connection has been passed properly
      * Post-Condition: Inventory object is filled
+     * @param conn The connection to the database
      */
-    private static void fillInventory() {
+    private static void fillInventory(Connection conn) {
 
         // Variables and objects
         Map<Integer, String> products = new HashMap<Integer, String>();
+        List<Integer> bundle_ids = new ArrayList<Integer>();
         ProductType productType;
 
         // SQL
-        String url = "jdbc:sqlite:PocketMagicOH.db";
+        String sqlGetProducts = "SELECT * FROM products";
 
-        String sql = "SELECT id, type FROM products";
+        String sqlGetBundles = """
+                SELECT id FROM products
+                WHERE type = 'BUNDLE'""";
 
-        // Filling the inventory
-        try (Connection conn = DriverManager.getConnection(url);
-             java.sql.Statement stmt = conn.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
 
-            // Checking each product in the inventory
-            while (rs.next()) {
-                products.put(rs.getInt("id"), rs.getString("type"));
-            }
+        try {
+            // Filling the inventory (Pt 1, bundles empty)
+            try (java.sql.Statement stmtGetProducts = conn.createStatement();
+                 java.sql.ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
 
-            // Adding each product to the inventory
-            for (var entry : products.entrySet()) {
-                try {
-                    productType = ProductType.valueOf(entry.getValue());
+                // Checking each product in the inventory
+                while (rsGetProducts.next()) {
+                    products.put(rsGetProducts.getInt("id"), rsGetProducts.getString("type"));
+                }
 
-                    // Adding the product
-                    switch (productType) {
-                        case CARD -> inventory.addProduct(parseCard(entry.getKey()));
-                        case BUNDLE -> inventory.addProduct(parseBundle(entry.getKey()));
+                // Adding each product to the inventory
+                for (var entry : products.entrySet()) {
+                    try {
+                        productType = ProductType.valueOf(entry.getValue());
+
+                        // Adding the product
+                        switch (productType) {
+                            case CARD -> inventory.addProduct(parseCard(conn, entry.getKey()));
+                            case BUNDLE -> inventory.addProduct(parseBundle(conn, entry.getKey()));
+                        }
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Error, invalid product type in database.");
+                    } catch (RuntimeException e) { // Also catches the NoSuchElementException
+                        System.out.println(e.getMessage());
                     }
+                } // For each product
+            } // Filling the inventory (Bundles empty)
+
+            // Filling the bundles
+            try (java.sql.Statement stmtGetBundles = conn.createStatement();
+                 java.sql.ResultSet rsGetBundles = stmtGetBundles.executeQuery(sqlGetBundles)) {
+
+                // Checking each bundle in the inventory
+                while (rsGetBundles.next()) {
+                    bundle_ids.add(rsGetBundles.getInt("id"));
                 }
-                catch (IllegalArgumentException e) {
-                    System.out.println("Error, invalid product type in database.");
+
+                // Filling each bundle
+                for (Integer bundle_id : bundle_ids) {
+                    fillBundle(conn, bundle_id);
                 }
-                catch (RuntimeException e) { // Also catches the NoSuchElementException
-                    System.out.println(e.getMessage());
-                }
-            } // For each product
-        } // Filling the inventory
+            }
+        }
         catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -235,23 +265,24 @@ public final class StoreFront {
 
     /**
      * Description: Returns a card object from its product id
-     * Pre-Condition: Param should be a valid id in the cards list and database is formatted correctly
+     * Pre-Condition: Param should be a valid id in the cards list and database is formatted correctly and connection
+     * is connected to the correct database
      * Post-Condition: The card is returned
+     * @param conn The connection to the database
      * @param product_id The id of the card
      * @return The card object that was created
      * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
      * @throws RuntimeException if the sql is not successful.
      */
-    private static Card parseCard(Integer product_id) {
-        String url = "jdbc:sqlite:PocketMagicOH.db";
+    private static Card parseCard(Connection conn, Integer product_id) {
 
+        // SQL
         String sql = String.format("""
                 SELECT * FROM cards
                 WHERE product_id = %d""", product_id);
 
         // Reading the card
-        try (Connection conn = DriverManager.getConnection(url);
-             java.sql.Statement stmt = conn.createStatement();
+        try (java.sql.Statement stmt = conn.createStatement();
              java.sql.ResultSet rs = stmt.executeQuery(sql)) {
 
             // No rows found, should never get here
@@ -274,94 +305,34 @@ public final class StoreFront {
     }
 
     /**
-     * Description: Returns a bundle object from its product id
-     * Pre-Condition: Param should be a valid id in the bundle list and database is formatted correctly
-     * Post-Condition: The bundle is returned
+     * Description: Returns an empty bundle object from its product id
+     * Pre-Condition: Param should be a valid id in the bundle list and database is formatted correctly and the
+     * connection is connected to the correct database
+     * Post-Condition: The bundle is returned with no contents
+     * @param conn The connection to the database
      * @param product_id The id of the bundle
      * @return The bundle object that was created
      * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
      * @throws RuntimeException if the sql is not successful.
      */
-    private static Bundle parseBundle(Integer product_id) {
-
-        // Variables and object
-        Bundle bundle;
-        int subProduct_id, quantity;
-        ProductType productType;
+    private static Bundle parseBundle(Connection conn, Integer product_id) {
 
         // SQL
-        String url = "jdbc:sqlite:PocketMagicOH.db";
-
         String sqlGetBundle = String.format("""
                 SELECT name FROM bundles
                 WHERE product_id = %d""", product_id);
 
-        String sqlGetProducts = String.format("""
-                SELECT * FROM bundle_items
-                WHERE bundle_id = %d""", product_id);
-
-        String sqlGetProductType = """
-                SELECT type FROM products
-                WHERE id = ?"""; // Not complete statement, needs id number
-
-
         // Establishing the connection
-        try (Connection conn = DriverManager.getConnection(url)) {
+        try (java.sql.Statement stmtGetBundle = conn.createStatement();
+             java.sql.ResultSet rsGetBundle = stmtGetBundle.executeQuery(sqlGetBundle)) {
 
-            // Getting the bundle
-            try (java.sql.Statement stmtGetBundle = conn.createStatement();
-                 java.sql.ResultSet rsGetBundle = stmtGetBundle.executeQuery(sqlGetBundle)) {
-
-                // No rows found, should never get here
-                if (!rsGetBundle.next()) {
-                    throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
-                }
-
-                // Creating the bundle
-                bundle = new Bundle(rsGetBundle.getString("name"));
-
+            // No rows found, should never get here
+            if (!rsGetBundle.next()) {
+                throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
             }
 
-            // Getting the products in the bundle
-            try (java.sql.Statement stmtGetProducts = conn.createStatement();
-                 java.sql.ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
-
-                // Each product
-                while (rsGetProducts.next()) {
-
-                    subProduct_id = rsGetProducts.getInt("product_id");
-                    quantity = rsGetProducts.getInt("quantity");
-
-                    // Getting the product type
-                    try (java.sql.PreparedStatement pstmtGetProductType = conn.prepareStatement(sqlGetProductType)) {
-                         pstmtGetProductType.setInt(1, subProduct_id);
-
-                        // Result of getting the product type
-                        try (java.sql.ResultSet rsGetProductType = pstmtGetProductType.executeQuery()) {
-
-                            // No rows found, should never get here
-                            if (!rsGetProductType.next()) {
-                                throw new NoSuchElementException(String.format(
-                                        "Error, product in bundle %d with product_id %d not found.",
-                                        product_id, subProduct_id));
-                            }
-
-                            // Adding the product to the bundle
-                            // (Don't need try/catch '.' exception will be caught in fillInventory)
-                            productType = ProductType.valueOf(rsGetProductType.getString("type"));
-
-                            // Adding the product
-                            switch (productType) {
-                                case CARD -> bundle.add(parseCard(subProduct_id), quantity);
-                                case BUNDLE -> bundle.add(parseBundle(subProduct_id), quantity);
-                            }
-                        } // Product type result
-                    } // Product type check
-                } // While product in bundle
-            } // Getting the products in the bundle
-
-            // Bundle complete
-            return bundle;
+            // Creating the bundle
+            return new Bundle(rsGetBundle.getString("name"));
 
         } // Opening the connection
         catch (SQLException e) {
@@ -370,32 +341,66 @@ public final class StoreFront {
     } // parseBundle
 
     /**
-     * Description: Fills the customers from all the info in the database
-     * Pre-Condition: None
-     * Post-Condition: Customers object is filled
+     * Description: Fills a bundle by its id
+     * Pre-Condition: Param must be an integer that is a valid bundle id and inventory must be filled with all objects
+     * and connection is connected to the correct database
+     * Post-Condition: Bundle is filled
+     * @param conn The connection to the database
+     * @param bundle_id The id of the bundle being filled
      */
-    private static void fillCustomers() {
+    private static void fillBundle(Connection conn, Integer bundle_id) {
 
         // Variables and objects
-        Map<Integer, String> customers = new HashMap<Integer, String>();
+        Bundle bundle = (Bundle) inventory.getProductById(bundle_id);
 
         // SQL
-        String url = "jdbc:sqlite:PocketMagicOH.db";
+        String sql = String.format("""
+                SELECT * FROM bundle_items
+                WHERE bundle_id = %d""", bundle_id);
 
+        // Establishing the connection and executing command
+        try (java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            // Each product in the bundle
+            while (rs.next()) {
+                Product product = inventory.getProductById(rs.getInt("product_id"));
+                Integer quantity = rs.getInt("quantity");
+
+                // Adding the product
+                bundle.add(product, quantity);
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    } // fillBundle
+
+    /**
+     * Description: Fills the customers from all the info in the database
+     * Pre-Condition: Connection has been passed properly
+     * Post-Condition: Customers object is filled
+     * @param conn The connection to the database
+     */
+    private static void fillCustomers(Connection conn) {
+
+        // Variables and objects
+        Map<Integer, String> shoppers = new HashMap<Integer, String>();
+
+        // SQL
         String sql = "SELECT id, name FROM customers";
 
         // Filling the customers
-        try (Connection conn = DriverManager.getConnection(url);
-             java.sql.Statement stmt = conn.createStatement();
+        try (java.sql.Statement stmt = conn.createStatement();
              java.sql.ResultSet rs = stmt.executeQuery(sql)) {
 
             // Checking each customer in the list
             while (rs.next()) {
-                customers.put(rs.getInt("id"), rs.getString("name"));
+                shoppers.put(rs.getInt("id"), rs.getString("name"));
             }
 
             // Adding each customer to the customers and setting their cart
-            for (var entry : customers.entrySet()) {
+            for (var entry : shoppers.entrySet()) {
 
                 // Local loop variables and objects
                 int id = entry.getKey();
@@ -406,7 +411,7 @@ public final class StoreFront {
 
                 // Filling their cart
                 try {
-                    c.setCart(fillCarts(id));
+                    c.setCart(fillCarts(conn, id));
                 }
                 catch (IllegalArgumentException e) { // Catches a bad product type enum
                     System.out.println("Error, invalid product type in database.");
@@ -414,6 +419,10 @@ public final class StoreFront {
                 catch (RuntimeException e) { // Also catches the NoSuchElementException, from parseCard/Bundle
                     System.out.println(e.getMessage());
                 }
+
+                // Adding the customer to the customers
+                customers.addShopper(c);
+
             } // For each customer
         } // Filling the customers
         catch (SQLException e) {
@@ -423,24 +432,21 @@ public final class StoreFront {
 
     /**
      * Description: Fills the cart objects a customer has using the customer id
-     * Pre-Condition: Param should be a valid id in the customers list and database is formated correctly
+     * Pre-Condition: Param should be a valid id in the customers list, database is formated correctly, fillInventory
+     * has been called, and the connection is connected to the correct database
      * Post-Condition: The cart is returned (To be updated if more carts per customer)
      * @param customer_id The id number of the customer
      * @return The cart object that was created
      * @throws RuntimeException if the sql is not successful.
      */
-    private static Cart fillCarts(int customer_id) {
+    private static Cart fillCarts(Connection conn, int customer_id) {
 
         // Variables and objects
         List<Integer> cart_ids = new ArrayList<Integer>(); // Modular for later
         List<Cart> carts = new ArrayList<Cart>();
-        int product_id, quantity;
-        ProductType productType;
         Cart cart;
 
         // SQL
-        String url = "jdbc:sqlite:PocketMagicOH.db";
-
         String sqlGetCarts = String.format("""
                 SELECT cart_id FROM carts
                 WHERE customer_id = %d""", customer_id);
@@ -449,15 +455,8 @@ public final class StoreFront {
                 SELECT * FROM cart_items
                 WHERE cart_id = ?"""; // Not complete statement, needs cart_id number
 
-        String sqlGetProductType = """
-                SELECT type FROM products
-                WHERE id = ?"""; // Not complete statement, needs id number
 
-
-
-        // Establishing the connection
-        try (Connection conn = DriverManager.getConnection(url)) {
-
+        try {
             // Getting the carts
             try (java.sql.Statement stmtGetCarts = conn.createStatement();
                  java.sql.ResultSet rsGetCarts = stmtGetCarts.executeQuery(sqlGetCarts)) {
@@ -487,50 +486,25 @@ public final class StoreFront {
 
                         // Each product in the cart
                         while (rsGetProducts.next()) {
+                            Product product = inventory.getProductById(rsGetProducts.getInt("product_id"));
+                            Integer quantity = rsGetProducts.getInt("quantity");
 
-                            product_id = rsGetProducts.getInt("product_id");
-                            quantity = rsGetProducts.getInt("quantity");
-
-                            // Getting the product type
-                            try (java.sql.PreparedStatement pstmtGetProductType = conn.prepareStatement(sqlGetProductType)) {
-                                pstmtGetProductType.setInt(1, product_id);
-
-                                // Result of getting the product type
-                                try (java.sql.ResultSet rsGetProductType = pstmtGetProductType.executeQuery()) {
-
-                                    // No rows found, should never get here
-                                    if (!rsGetProductType.next()) {
-                                        throw new NoSuchElementException(String.format(
-                                                "Error, product in cart %d with product_id %d not found.",
-                                                cart_id, product_id));
-                                    }
-
-                                    // Adding the product to the bundle
-                                    // (Don't need try/catch '.' exception will be caught in fillCustomers)
-                                    productType = ProductType.valueOf(rsGetProductType.getString("type"));
-
-                                    // Adding the product
-                                    switch (productType) {
-                                        case CARD -> cart.add(parseCard(product_id), quantity);
-                                        case BUNDLE -> cart.add(parseBundle(product_id), quantity);
-                                    }
-                                } // Product type result
-                            } // Product type check
-                        } // While product in cart
-                    } // Result of getting the products in the cart
-                } // Getting the products in that cart
+                            // Adding the product
+                            cart.add(product, quantity);
+                        }
+                    }
+                }
 
                 // Adding the filled cart
                 carts.add(cart);
 
             } // For each cart the customer has
-
-            return carts.getFirst();
-
-        } // Opening the connection
+        }
         catch (SQLException e) {
             throw new RuntimeException("Database error while fetching cart", e);
         }
+
+        return carts.getFirst(); // Adapt later
     } // fillCarts
 
     /**
