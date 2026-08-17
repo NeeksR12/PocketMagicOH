@@ -2,13 +2,17 @@ package commands;
 
 import databases.*;
 import entities.products.Product;
+import entities.products.items.Item;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ReportInventoryCMD
  * Description: Command for reporting the inventory
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 17th, 2026
  */
 public class ReportInventoryCMD extends Command{
 
@@ -46,11 +50,21 @@ public class ReportInventoryCMD extends Command{
      */
     @Override
     public void run() {
+
+        // Variables and objects
+        List<Product> nonItems = new ArrayList<Product>();
+
         sb.append("\nINVENTORY\n");
         if (inventory.hasStock()) {
             for (Product p : inventory.getInv()) {
-                sb.append(String.format("%s %d\n", p.getName(), p.getStock()));
-                // NOTE: Less resource intensive than +=, += creates a new string builder each iteration
+                if (p instanceof Item i)
+                    sb.append(String.format("%s %d\n", i.getName(), i.getStock()));
+                    // NOTE: Less resource intensive than +=, += creates a new string builder each iteration
+                else
+                    nonItems.add(p);
+            }
+            for (Product p : nonItems) {
+                sb.append(String.format("%s\n", p.getName()));
             }
             output = sb.toString();
         }
