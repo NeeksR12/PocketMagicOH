@@ -4,6 +4,7 @@ import databases.*;
 import entities.Cart;
 import entities.Customer;
 import entities.products.Product;
+import entities.products.items.Item;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -82,11 +83,11 @@ public class CheckoutCMD extends Command {
             c.empty();
         }
         catch (IllegalArgumentException e) {
-            Map<Product, Integer> insufficient = new HashMap<Product, Integer>();
+            Map<Item, Integer> insufficient = new HashMap<Item, Integer>();
             StringBuilder sb = new StringBuilder();
 
             // Checking which items were out of stock
-            for (var entry : c.getProducts().entrySet()) {
+            for (var entry : c.toItems().entrySet()) {
                 if (entry.getKey().getStock() <= entry.getValue()) {
                     insufficient.put(entry.getKey(), entry.getValue());
                 }
