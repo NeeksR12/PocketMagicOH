@@ -84,7 +84,7 @@ public final class InventoryRepository {
             // Giving the product object its id
             try (ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    p.setId(rs.getInt("id"));
+                    p.setId(rs.getInt(1));
                 }
             }
         }

@@ -141,10 +141,9 @@ public class Customers {
      */
     public boolean isProductInCart(String name) {
         for (Customer c : shoppers.values()) {
-            for (Product p : c.getCart().getProducts().keySet())
-                if (p instanceof ProductGroup pg) {
-                    if (pg.hasProduct(name))
-                        return true; // Is in a product group
+            for (Product p : c.getCart().getProducts().keySet()) {
+                if (p.getName().equals(name))
+                    return true;
             }
         }
         return false;

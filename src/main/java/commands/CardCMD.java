@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * Description: Card Command to handle all actions related to card
  * Name: Nico Rotella
  * Date Created: May 6th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 20th, 2026
  */
 public class CardCMD extends Command {
 
@@ -120,8 +120,8 @@ public class CardCMD extends Command {
 
                 // Checking if any product groups contain the card
                 if (customers.isProductInCart(name) || inventory.isProductInProductGroup(name))
-                    throw new IllegalArgumentException("Error, cannot delete this card because it is already in" +
-                            " a product group");
+                    throw new IllegalArgumentException("Error, cannot delete this card because it is already being" +
+                            " used");
             } // DELETE
         } // switch
     } // parse
@@ -182,8 +182,8 @@ public class CardCMD extends Command {
      * Post-Condition: The card has been removed and the output has been set
      */
     private void delete() {
-        inventory.removeProductByName(name); // Marks deleted
         customers.deleteProductFromAllCarts(inventory.getCardByName(name)); // Failsafe, should never do anything
+        inventory.removeProductByName(name); // Marks deleted
         output = String.format("card %s deleted", name);
     }
 

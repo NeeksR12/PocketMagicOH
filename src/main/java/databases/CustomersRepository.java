@@ -60,7 +60,8 @@ public final class CustomersRepository {
 
         // SQL
         String sqlAddCustomer = "INSERT INTO customers (name) VALUES (?)"; // Not complete statement, needs name
-        String sqlAddCart = "INSERT INTO carts (customer_id) VALUSE (?)"; // Not complete statement, needs customer_id
+
+        String sqlAddCart = "INSERT INTO carts (customer_id) VALUES (?)"; // Not complete statement, needs customer_id
 
         // Adding the customer to the customers table
         try (PreparedStatement pstmtAddCustomer = conn.prepareStatement(sqlAddCustomer, Statement.RETURN_GENERATED_KEYS)) {
@@ -70,7 +71,7 @@ public final class CustomersRepository {
             // Giving the customer object its id
             try (ResultSet rsAddCustomer = pstmtAddCustomer.getGeneratedKeys()) {
                 if (rsAddCustomer.next()) {
-                    c.setId(rsAddCustomer.getInt("id"));
+                    c.setId(rsAddCustomer.getInt(1));
                 }
             }
         }
@@ -83,7 +84,7 @@ public final class CustomersRepository {
             // Giving the cart its id
             try (ResultSet rsAddCart = pstmtAddCart.getGeneratedKeys()) {
                 if (rsAddCart.next()) {
-                    c.getCart().setId(rsAddCart.getInt("cart_id"));
+                    c.getCart().setId(rsAddCart.getInt(1));
                 }
             }
         }
@@ -102,6 +103,7 @@ public final class CustomersRepository {
      */
     private static void update(Connection conn, Customer c) throws SQLException {
 
+        /*
         // SQL
         String sql = "DELETE FROM customers WHERE customer_id = ?"; // Not complete statement, needs customer_id
 
@@ -114,6 +116,9 @@ public final class CustomersRepository {
 
         // Adding the current version of the customer
         insert(conn, c);
+
+         */
+        saveCartItems(conn, c.getCart());
     }
 
     /**
@@ -152,7 +157,7 @@ public final class CustomersRepository {
             }
 
             // Running the batch
-            pstmtUpdateCartItems.addBatch();
+            pstmtUpdateCartItems.executeBatch();
         }
     }
 

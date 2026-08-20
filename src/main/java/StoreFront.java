@@ -21,8 +21,6 @@ import utils.*;
 // Class
 public final class StoreFront {
 
-    // Enum
-
     // Static fields
     static Inventory inventory = new Inventory(); // Initialized in open store method
     static Customers customers = new Customers();
@@ -38,58 +36,87 @@ public final class StoreFront {
         String input, command, output;
 
 
-        // Filling the inventory array list with cards
-        openStore();
+        // Establishing DB connection
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:PocketMagicOH.db")) {
 
-        // Taking input from the user
-        do {
-            sb.append(s.nextLine());
-            input = sb.toString();
-        } while (!input.contains("REPORT INVENTORY;"));
-
-        // Empty String builder
-        sb.setLength(0);
-
-        // Gathering their commands
-        for (int i = 0; i < input.length(); i++) {
-
-            // Getting their command
-            sb.append(input.charAt(i));
-            command = sb.toString();
-
-            // Seeing if the command is complete
-            if (command.contains(";")) {
-                incomingCommands.add(command.trim());
-                sb.setLength(0);
-            }
-        }
-
-        // Creating their commands
-        for (String incomingCommand : incomingCommands) {
-            createCommand(incomingCommand);
-        }
-
-        // Updates and outputs
-        for (Command c : commands) {
+            // Running program
             try {
-                c.parse();
-                c.run();
-                sb.append(c.getOutput()).append("\n"); // Adding result of command output to actual output
+                conn.setAutoCommit(false); // In case of error, no partial override occurs
+
+                // Filling the inventory array list with cards
+                openStore(conn);
+
+                // Taking input from the user
+                do {
+                    sb.append(s.nextLine());
+                    input = sb.toString();
+                } while (!input.contains("REPORT INVENTORY;"));
+
+                // Empty String builder
+                sb.setLength(0);
+
+                // Gathering their commands
+                for (int i = 0; i < input.length(); i++) {
+
+                    // Getting their command
+                    sb.append(input.charAt(i));
+                    command = sb.toString();
+
+                    // Seeing if the command is complete
+                    if (command.contains(";")) {
+                        incomingCommands.add(command.trim());
+                        sb.setLength(0);
+                    }
+                }
+
+                // Creating their commands
+                for (String incomingCommand : incomingCommands) {
+                    createCommand(incomingCommand);
+                }
+
+                // Updates and outputs
+                for (Command c : commands) {
+                    try {
+                        c.parse();
+                        c.run();
+                        sb.append(c.getOutput()).append("\n"); // Adding result of command output to actual output
+                    } catch (IllegalArgumentException e) {
+                        sb.append(e.getMessage()).append("\n");
+                    }
+                }
+
+                // Assigning actual output
+                output = sb.toString();
+
+                // Display output
+                System.out.println(output);
+
+                // Updating the text files
+                closeStore(conn);
+                conn.commit(); // Committing changes
+
             }
-            catch (IllegalArgumentException e) {
-                sb.append(e.getMessage()).append("\n");
+            catch(SQLException e){ // Error with DB updates, rollback
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) { // Error with rollback
+                    System.out.println("Error with rollback: " + rollbackEx.getMessage());
+                }
+                System.out.println("Save failed, changes were rolled back: " + e.getMessage());
             }
+            finally{
+                try {
+                    conn.setAutoCommit(true);
+                }
+                catch (SQLException ignored) {}
+            } // Running program
+        } // Establishing connection
+        catch (SQLException e) {
+            System.out.printf("""
+                    Error connecting to the database.
+                    Error message: %s
+                    """, e.getMessage());
         }
-
-        // Assigning actual output
-        output = sb.toString();
-
-        // Display output
-        System.out.println(output);
-
-        // Updating the text files
-        //closeStore();
-
     } // Main
 
     /**
@@ -97,24 +124,12 @@ public final class StoreFront {
      * Pre-Condition: None
      * Post-Condition: The objects are set up
      */
-    public static void openStore() {
+    public static void openStore(Connection conn) {
+        // If they don't already exist, creating the tables in the database
+        createTables(conn);
 
-        // SQL
-        String url = "jdbc:sqlite:PocketMagicOH.db";
-
-        try (Connection conn = DriverManager.getConnection(url)) {
-            // If they don't already exist, creating the tables in the database
-            createTables(conn);
-
-            fillInventory(conn);
-            fillCustomers(conn);
-        }
-        catch (SQLException e) {
-            System.out.printf("""
-                    Error connecting to the database.
-                    Error message: %s
-                    """, e.getMessage());
-        }
+        fillInventory(conn);
+        fillCustomers(conn);
     } // openStore
 
     /**
@@ -437,6 +452,7 @@ public final class StoreFront {
 
                 // This customer
                 Customer c = new Customer(name);
+                c.setId(id);
 
                 // Filling their cart
                 try {
@@ -507,6 +523,7 @@ public final class StoreFront {
             for (Integer cart_id : cart_ids) {
 
                 cart = new Cart();
+                cart.setId(cart_id);
 
                 // Getting the product itself
                 try (PreparedStatement pstmtGetProducts = conn.prepareStatement(sqlGetProducts)) {
@@ -537,6 +554,19 @@ public final class StoreFront {
 
         return carts.getFirst(); // Adapt later
     } // fillCarts
+
+    /**
+     * Description: Updates the DB with all the updates
+     * Pre-Condition: Connection is set up properly
+     * Post-Condition: DB is updated
+     * @param conn The connection to the DB
+     * @throws SQLException if there is an SQL issue
+     */
+    public static void closeStore(Connection conn) throws SQLException{
+        // Updating DB
+        InventoryRepository.save(conn, inventory);
+        CustomersRepository.save(conn, customers);
+    }
 
     /**
      * Description: Creates a command object for the type of command run and adds it to the command list
