@@ -1,8 +1,5 @@
+import java.sql.*;
 import java.util.*;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 import commands.*;
 import databases.*;
@@ -18,14 +15,13 @@ import utils.*;
  * Description: Main class for Pocket Magic Oh. Contains the inventory system
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
 public final class StoreFront {
 
     // Enum
-    enum ProductType {CARD, BUNDLE}
 
     // Static fields
     static Inventory inventory = new Inventory(); // Initialized in open store method
@@ -119,7 +115,6 @@ public final class StoreFront {
                     Error message: %s
                     """, e.getMessage());
         }
-
     } // openStore
 
     /**
@@ -186,7 +181,12 @@ public final class StoreFront {
         // Creating the tables
         try (java.sql.Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
             for (String sqlCreateTable : sqlCreateTables) {
-                stmt.execute(sqlCreateTable);
+                try {
+                    stmt.execute(sqlCreateTable);
+                }
+                catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
             }
         }
         catch (SQLException e) {
@@ -235,9 +235,11 @@ public final class StoreFront {
                             case CARD -> inventory.addProduct(parseCard(conn, entry.getKey()));
                             case BUNDLE -> inventory.addProduct(parseBundle(conn, entry.getKey()));
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    catch (IllegalArgumentException e) {
                         System.out.println("Error, invalid product type in database.");
-                    } catch (RuntimeException e) { // Also catches the NoSuchElementException
+                    }
+                    catch (RuntimeException e) { // Also catches the NoSuchElementException
                         System.out.println(e.getMessage());
                     }
                 } // For each product
@@ -276,28 +278,39 @@ public final class StoreFront {
      */
     private static Card parseCard(Connection conn, Integer product_id) {
 
+        // Variables and objects
+        Card c;
+
         // SQL
-        String sql = String.format("""
+        String sql = """
                 SELECT * FROM cards
-                WHERE product_id = %d""", product_id);
+                WHERE product_id = ?"""; // Not complete statement, needs product_id
 
         // Reading the card
-        try (java.sql.Statement stmt = conn.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, product_id);
 
-            // No rows found, should never get here
-            if (!rs.next()) {
-                throw new NoSuchElementException(String.format("Error, card with product_id %d not found.", product_id));
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                // No rows found, should never get here
+                if (!rs.next()) {
+                    throw new NoSuchElementException(String.format("Error, card with product_id %d not found.", product_id));
+                }
+
+                // Creating the card
+                c = new Card(
+                        rs.getString("name"),
+                        rs.getString("element"),
+                        rs.getString("rarity"),
+                        rs.getInt("price"),
+                        rs.getInt("stock")
+                );
+
+                // Setting its id
+                c.setId(product_id);
+
+                // Returning the card
+                return c;
             }
-
-            // Returning the card
-            return new Card(
-                    rs.getString("name"),
-                    rs.getString("element"),
-                    rs.getString("rarity"),
-                    rs.getInt("price"),
-                    rs.getInt("stock")
-            );
         }
         catch (SQLException e) {
             throw new RuntimeException("Database error while fetching card", e);
@@ -317,24 +330,37 @@ public final class StoreFront {
      */
     private static Bundle parseBundle(Connection conn, Integer product_id) {
 
+        // Variables and objects
+        Bundle b;
+
         // SQL
-        String sqlGetBundle = String.format("""
+        String sql = """
                 SELECT name FROM bundles
-                WHERE product_id = %d""", product_id);
+                WHERE product_id = ?"""; // Not complete statement, needs product_id
 
-        // Establishing the connection
-        try (java.sql.Statement stmtGetBundle = conn.createStatement();
-             java.sql.ResultSet rsGetBundle = stmtGetBundle.executeQuery(sqlGetBundle)) {
+        // Preparing the statement
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, product_id);
 
-            // No rows found, should never get here
-            if (!rsGetBundle.next()) {
-                throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
+            // Getting the results
+            try (ResultSet rs = pstmt.executeQuery()) {
+
+                // No rows found, should never get here
+                if (!rs.next()) {
+                    throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
+                }
+
+                // Creating the bundle
+                b = new Bundle(rs.getString("name"));
+
+                // Setting its id
+                b.setId(product_id);
+
+                // Returning the bundle
+                return b;
+
             }
-
-            // Creating the bundle
-            return new Bundle(rsGetBundle.getString("name"));
-
-        } // Opening the connection
+        }
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -354,21 +380,24 @@ public final class StoreFront {
         Bundle bundle = (Bundle) inventory.getProductById(bundle_id);
 
         // SQL
-        String sql = String.format("""
+        String sql = """
                 SELECT * FROM bundle_items
-                WHERE bundle_id = %d""", bundle_id);
+                WHERE bundle_id = ?"""; // Not a complete statement, needs bundle_id
 
-        // Establishing the connection and executing command
-        try (java.sql.Statement stmt = conn.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+        // Preparing the statement
+        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, bundle_id);
 
-            // Each product in the bundle
-            while (rs.next()) {
-                Product product = inventory.getProductById(rs.getInt("product_id"));
-                Integer quantity = rs.getInt("quantity");
+            // Getting the results
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                // Each product in the bundle
+                while (rs.next()) {
+                    Product product = inventory.getProductById(rs.getInt("product_id"));
+                    Integer quantity = rs.getInt("quantity");
 
-                // Adding the product
-                bundle.add(product, quantity);
+                    // Adding the product
+                    bundle.add(product, quantity);
+                }
             }
         }
         catch (SQLException e) {
@@ -447,9 +476,9 @@ public final class StoreFront {
         Cart cart;
 
         // SQL
-        String sqlGetCarts = String.format("""
+        String sqlGetCarts = """
                 SELECT cart_id FROM carts
-                WHERE customer_id = %d""", customer_id);
+                WHERE customer_id = ?"""; // Not a complete statement, requires customer_id
 
         String sqlGetProducts = """
                 SELECT * FROM cart_items
@@ -458,18 +487,20 @@ public final class StoreFront {
 
         try {
             // Getting the carts
-            try (java.sql.Statement stmtGetCarts = conn.createStatement();
-                 java.sql.ResultSet rsGetCarts = stmtGetCarts.executeQuery(sqlGetCarts)) {
+            try (java.sql.PreparedStatement pstmtGetCarts = conn.prepareStatement(sqlGetCarts)) {
+                pstmtGetCarts.setInt(1, customer_id);
 
-                // No rows found
-                if (!rsGetCarts.next()) {
-                    return new Cart(); // Customer doesn't have a cart so they have their cart empty
+                try (java.sql.ResultSet rsGetCarts = pstmtGetCarts.executeQuery()) {
+                    // No rows found
+                    if (!rsGetCarts.next()) {
+                        return new Cart(); // Customer doesn't have a cart so they have their cart empty
+                    }
+
+                    // They have cart(s)
+                    do {
+                        cart_ids.add(rsGetCarts.getInt("cart_id"));
+                    } while (rsGetCarts.next());
                 }
-
-                // They have cart(s)
-                do {
-                    cart_ids.add(rsGetCarts.getInt("cart_id"));
-                } while (rsGetCarts.next());
             }
 
             // Getting the products in each cart

@@ -2,6 +2,7 @@ package databases;
 
 import entities.Customer;
 import entities.products.Product;
+import entities.products.ProductGroup;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -11,7 +12,7 @@ import java.util.NoSuchElementException;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 8th, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -95,6 +96,24 @@ public class Customers {
         for (Customer c : shoppers) {
             c.getCart().delete(product);
         }
+    }
+
+    /**
+     * Description: Checks if a product is in a product group in the inventory
+     * Pre-Condition: None
+     * Post-Condition: Boolean is returned if product is in a product group
+     * @param name The name of the product being checked
+     * @return Boolean if in a product group
+     */
+    public boolean isProductInCart(String name) {
+        for (Customer c : shoppers) {
+            for (Product p : c.getCart().getProducts().keySet())
+                if (p instanceof ProductGroup pg) {
+                    if (pg.hasProduct(name))
+                        return true; // Is in a product group
+            }
+        }
+        return false;
     }
 
     /**

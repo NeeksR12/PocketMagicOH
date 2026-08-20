@@ -8,7 +8,7 @@ import entities.products.Product;
  * Description: Class for card objects. Each card contains its own attributes such as element, rarity, etc.
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: July 29th, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -18,6 +18,7 @@ public class Card implements Item {
     private final String name;
     private String element, rarity;
     private int price, stock;
+    private Integer id;
 
     // Constructors
     /**
@@ -93,6 +94,16 @@ public class Card implements Item {
         return stock;
     }
 
+    @Override
+    public Integer getId() {
+        return id;
+    }
+
+    @Override
+    public String getType() {
+        return "CARD";
+    }
+
     // Setters
     public void setElement(String e) {
         element = e;
@@ -108,6 +119,11 @@ public class Card implements Item {
 
     public void setStock(int s) {
         stock = s;
+    }
+
+    @Override
+    public void setId(Integer i) {
+        id = i;
     }
 
 } // Class

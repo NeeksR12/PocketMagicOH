@@ -10,7 +10,7 @@ import java.util.Map;
  * Description: A collection of other products that are sold together in a pre-determined group
  * Name: Nico Rotella
  * Date Created: August 5th, 2026
- * Last Edited: August 8th, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -19,6 +19,7 @@ public class Bundle implements Product, ProductGroup {
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
     private final String name;
+    private Integer id;
     
     
     // Constructors
@@ -191,6 +192,22 @@ public class Bundle implements Product, ProductGroup {
 
     public Map<Product, Integer> getProducts() {
         return products;
+    }
+
+    @Override
+    public Integer getId() {
+        return id;
+    }
+
+    @Override
+    public String getType() {
+        return "BUNDLE";
+    }
+
+    // Setters
+    @Override
+    public void setId(Integer i) {
+        id = i;
     }
 
 }

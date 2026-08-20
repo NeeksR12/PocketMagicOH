@@ -12,7 +12,7 @@ import java.util.List;
  * Description: Command for reporting the inventory
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: August 17th, 2026
+ * Last Edited: August 19th, 2026
  */
 public class ReportInventoryCMD extends Command{
 
@@ -56,7 +56,7 @@ public class ReportInventoryCMD extends Command{
 
         sb.append("\nINVENTORY\n");
         if (inventory.hasStock()) {
-            for (Product p : inventory.getInv()) {
+            for (Product p : inventory.getInv().values()) {
                 if (p instanceof Item i)
                     sb.append(String.format("%s %d\n", i.getName(), i.getStock()));
                     // NOTE: Less resource intensive than +=, += creates a new string builder each iteration
