@@ -12,7 +12,7 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 8th, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -20,6 +20,7 @@ public class Cart implements ProductGroup {
 
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
+    private Integer id;
 
 
     // Constructors
@@ -174,6 +175,15 @@ public class Cart implements ProductGroup {
     // Getters
     public Map<Product, Integer> getProducts() {
         return products;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    // Setters
+    public void setId(Integer i) {
+        id = i;
     }
 
 }

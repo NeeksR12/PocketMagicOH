@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -153,7 +153,7 @@ public class CartCMD extends Command {
                 }
             } // CLEAR
         } // Switch action
-    }
+    } // parse
 
     /**
      * Description: Actually runs the command, updating as required and setting output
@@ -162,6 +162,7 @@ public class CartCMD extends Command {
      */
     @Override
     public void run() {
+        customers.markDirty(customer); // Customer is always dirty after cart is manipulated
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();

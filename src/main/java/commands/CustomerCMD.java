@@ -8,7 +8,7 @@ import entities.Customer;
  * Description: Customer Command to handle all actions related to CUSTOMER
  * Name: Nico Rotella
  * Date Created: July 29th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -91,7 +91,7 @@ public class CustomerCMD extends Command {
      * Post-Condition: A customer with the given name has been created
      */
     private void create() {
-        customers.addShopper(new Customer(name));
+        customers.addShopper(new Customer(name)); // Marks dirty
         output = String.format("customer %s created", name);
     }
 
@@ -101,7 +101,7 @@ public class CustomerCMD extends Command {
      * Post-Condition: The customer with the given name has been removed from shoppers
      */
     private void delete() {
-        customers.removeShopperByName(name);
+        customers.removeShopperByName(name); // Marks deleted
         output = String.format("customer %s deleted", name);
     }
 

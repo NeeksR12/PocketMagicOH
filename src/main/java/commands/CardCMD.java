@@ -148,7 +148,7 @@ public class CardCMD extends Command {
      */
     private void create() {
         inventory.addProduct(new Card(name, fields.get("element"), fields.get("rarity"),
-                Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock"))));
+                Integer.parseInt(fields.get("price")), Integer.parseInt(fields.get("stock")))); // Marks dirty
         output = String.format("card %s added", name);
     }
 
@@ -160,6 +160,9 @@ public class CardCMD extends Command {
     private void update() {
         // Card
         Card c = inventory.getCardByName(name); // Should never throw since parse checks if it is in the inventory
+
+        // Marking card dirty
+        inventory.markDirty(c);
 
         // Updating any fields that need to be updated
         for (var entry : fields.entrySet()) {
@@ -179,7 +182,7 @@ public class CardCMD extends Command {
      * Post-Condition: The card has been removed and the output has been set
      */
     private void delete() {
-        inventory.removeProductByName(name);
+        inventory.removeProductByName(name); // Marks deleted
         customers.deleteProductFromAllCarts(inventory.getCardByName(name)); // Failsafe, should never do anything
         output = String.format("card %s deleted", name);
     }

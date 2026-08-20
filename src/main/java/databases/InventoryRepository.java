@@ -16,7 +16,10 @@ import java.sql.*;
  */
 
 // Class
-public class InventoryRepository {
+public final class InventoryRepository {
+
+    // Private constructor, does not need an instance
+    private InventoryRepository() {}
 
     /**
      * Description: Saves an inventory object to a DB based on all changes logged to the inventory
@@ -56,7 +59,7 @@ public class InventoryRepository {
 
     /**
      * Description: Inserts a product into all of its respective tables
-     * Pre-Condition: This product must not have been in the DB before and connection must be set up properly
+     * Pre-Condition: This product must not be in the DB and connection must be set up properly
      * Post-Condition: This product is added to the DB
      * @param conn The connection to the DB
      * @param p The product
@@ -74,7 +77,7 @@ public class InventoryRepository {
         productType = ProductType.valueOf(p.getType()); // Should never throw, products only return valid type strings
 
         // Adding the product to the products table
-        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, productType.toString());
             pstmt.executeUpdate();
 
@@ -213,7 +216,8 @@ public class InventoryRepository {
 
     /**
      * Description: Saves the contents of a bundle to the bundle_items table in the DB
-     * Pre-Condition: All dirty products have been added to the DB, no inserting still needs to be done
+     * Pre-Condition: All dirty products have been added to the DB, no inserting still needs to be done and connection
+     * is set up properly
      * Post-Condition: This bundle has its items saved properly in the DB
      * @param conn The connection to the DB
      * @param b The bundle
@@ -251,40 +255,56 @@ public class InventoryRepository {
         }
     }
 
+    /**
+     * Description: Removes a product from the DB
+     * Pre-Condition: This product is already in the DB and connection is set up properly
+     * Post-Condition: This product no longer exists in the DB
+     * @param conn The connection to the DB
+     * @param p The product
+     * @throws SQLException if there is an SQL issue
+     */
     private static void delete(Connection conn, Product p) throws SQLException {
 
         // Variables and objects
         ProductType productType = ProductType.valueOf(p.getType());
 
         // SQL
-        String sqlRemoveFromItems = "DELETE FROM bundle_items WHERE bundle_id = ? OR product_id = ?";
+        String sqlRemoveFromBundleItems = "DELETE FROM bundle_items WHERE bundle_id = ? OR product_id = ?";
         // Not complete statement, needs values.
 
-        String sqlRemoveFromType = "DELETE FROM ? WHERE product_id = ?";
-        // Not complete statement, needs table type and product id
+        String sqlRemoveFromCards = "DELETE FROM cards WHERE product_id = ?";
+        // Not complete statement, needs product id
+
+        String sqlRemoveFromBundles = "DELETE FROM bundles WHERE product_id = ?";
+        // Not complete statement, needs product id
 
         String sqlRemoveFromProducts = "DELETE FROM products WHERE id = ?";
         // Not complete statement, needs id
 
         // Removing from bundle_items
-        try (PreparedStatement pstmtRemoveFromBundleItems = conn.prepareStatement(sqlRemoveFromItems)) {
-            pstmtRemoveFromBundleItems.setString(1, "bundle_items");
+        try (PreparedStatement pstmtRemoveFromBundleItems = conn.prepareStatement(sqlRemoveFromBundleItems)) {
+            pstmtRemoveFromBundleItems.setInt(1, p.getId());
             pstmtRemoveFromBundleItems.setInt(2, p.getId());
-            pstmtRemoveFromBundleItems.setInt(3, p.getId());
 
             pstmtRemoveFromBundleItems.executeUpdate();
         }
 
         // Removing from type table
-        try (PreparedStatement pstmtRemoveFromType = conn.prepareStatement(sqlRemoveFromType)) {
-            // Assigning the type
-            switch (productType) {
-                case CARD -> pstmtRemoveFromType.setString(1, "cards");
-                case BUNDLE -> pstmtRemoveFromType.setString(1, "bundles");
-            }
-            pstmtRemoveFromType.setInt(2, p.getId());
+        switch (productType) {
+            case CARD -> {
+                try (PreparedStatement pstmtRemoveFromCards = conn.prepareStatement(sqlRemoveFromCards)) {
+                    pstmtRemoveFromCards.setInt(1, p.getId());
 
-            pstmtRemoveFromType.executeUpdate();
+                    pstmtRemoveFromCards.executeUpdate();
+                }
+            }
+            case BUNDLE -> {
+                try (PreparedStatement pstmtRemoveFromBundles = conn.prepareStatement(sqlRemoveFromBundles)) {
+                    pstmtRemoveFromBundles.setInt(1, p.getId());
+
+                    pstmtRemoveFromBundles.executeUpdate();
+                }
+            }
         }
 
         // Removing from products

@@ -80,8 +80,10 @@ public class Inventory {
      * @throws IllegalArgumentException if the card is already in the inventory
      */
     public void addProduct(Product p) {
-        if (!hasProduct(p.getName()))
+        if (!hasProduct(p.getName())) {
             inv.put(p.getName(), p);
+            markDirty(p);
+        }
         else
             throw new IllegalArgumentException("Error, this product is already in the inventory therefore cannot be added.");
     }
@@ -95,7 +97,7 @@ public class Inventory {
      */
     public void removeProductByName(String name) throws IllegalArgumentException {
 
-        // Variables
+        // Variables and objects
         Product product;
 
         // Checking if this is a valid product
@@ -106,7 +108,7 @@ public class Inventory {
             throw new IllegalArgumentException("Error, this product is not in the inventory therefore cannot be removed");
         }
 
-        // Removing the Product from any other product that may contain it
+        // Removing the product from any other product that may contain it
         for (Product p: inv.values()) {
             if (p instanceof ProductGroup pc && pc.hasProduct(name))
                 pc.delete(product);
@@ -117,15 +119,25 @@ public class Inventory {
     }
 
     /**
+     * Description: Takes a product and marks it as dirty for the DB to worry about
+     * Pre-Condition: Should only mark a product dirty if being created or updated
+     * Post_Condition: The product is marked dirty
+     * @param p The product
+     */
+    public void markDirty(Product p) {
+        dirtyProducts.add(p);
+    }
+
+    /**
      * Description: Takes a product and marks it as a deleted product for the DB to worry about
      * Pre-Condition: Param is a product
-     * Post-Condition: The product is ready to be deleted from the DB
+     * Post-Condition: The product is ready to be deleted from the DB and is removed from inv
      * @param p The product
      */
     private void markDeleted(Product p) {
         dirtyProducts.remove(p);
-        if (p.getId() == null) { // Hasn't even been in the DB yet
-            deletedProducts.add(p); // Therefore doesn't need to be deleted from the DB
+        if (p.getId() != null) { // Checking if the product has been in the DB before
+            deletedProducts.add(p); // It has, .'. needs to be deleted
         }
         inv.remove(p.getName());
     }

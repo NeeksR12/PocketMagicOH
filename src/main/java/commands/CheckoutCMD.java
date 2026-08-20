@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
  * Description: Checkout Command to handle checking out a customer
  * Name: Nico Rotella
  * Date Created: July 29th, 2026
- * Last Edited: August 1st, 2026
+ * Last Edited: August 19th, 2026
  */
 
 // Class
@@ -62,7 +62,6 @@ public class CheckoutCMD extends Command {
         }
     }
 
-
     /**
      * Description: Actually runs the command, updating as required and setting output
      * Pre-Condition: Parse has been run on this command
@@ -79,8 +78,9 @@ public class CheckoutCMD extends Command {
             inventory.purchaseCart(c);
 
             // Success
-            output = String.format("%s total %d", customer.getName(), c.price());
+            customers.markDirty(customer);
             c.empty();
+            output = String.format("%s total %d", customer.getName(), c.price());
         }
         catch (IllegalArgumentException e) {
             Map<Item, Integer> insufficient = new HashMap<Item, Integer>();

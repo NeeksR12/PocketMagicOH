@@ -179,7 +179,7 @@ public final class StoreFront {
         };
 
         // Creating the tables
-        try (java.sql.Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
+        try (Statement stmt = conn.createStatement()) { // Resource try catch, creates and closes these when done
             for (String sqlCreateTable : sqlCreateTables) {
                 try {
                     stmt.execute(sqlCreateTable);
@@ -217,8 +217,8 @@ public final class StoreFront {
 
         try {
             // Filling the inventory (Pt 1, bundles empty)
-            try (java.sql.Statement stmtGetProducts = conn.createStatement();
-                 java.sql.ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
+            try (Statement stmtGetProducts = conn.createStatement();
+                 ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
 
                 // Checking each product in the inventory
                 while (rsGetProducts.next()) {
@@ -246,8 +246,8 @@ public final class StoreFront {
             } // Filling the inventory (Bundles empty)
 
             // Filling the bundles
-            try (java.sql.Statement stmtGetBundles = conn.createStatement();
-                 java.sql.ResultSet rsGetBundles = stmtGetBundles.executeQuery(sqlGetBundles)) {
+            try (Statement stmtGetBundles = conn.createStatement();
+                 ResultSet rsGetBundles = stmtGetBundles.executeQuery(sqlGetBundles)) {
 
                 // Checking each bundle in the inventory
                 while (rsGetBundles.next()) {
@@ -287,10 +287,10 @@ public final class StoreFront {
                 WHERE product_id = ?"""; // Not complete statement, needs product_id
 
         // Reading the card
-        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, product_id);
 
-            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 // No rows found, should never get here
                 if (!rs.next()) {
                     throw new NoSuchElementException(String.format("Error, card with product_id %d not found.", product_id));
@@ -385,11 +385,11 @@ public final class StoreFront {
                 WHERE bundle_id = ?"""; // Not a complete statement, needs bundle_id
 
         // Preparing the statement
-        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, bundle_id);
 
             // Getting the results
-            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 // Each product in the bundle
                 while (rs.next()) {
                     Product product = inventory.getProductById(rs.getInt("product_id"));
@@ -420,8 +420,8 @@ public final class StoreFront {
         String sql = "SELECT id, name FROM customers";
 
         // Filling the customers
-        try (java.sql.Statement stmt = conn.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
             // Checking each customer in the list
             while (rs.next()) {
@@ -487,10 +487,10 @@ public final class StoreFront {
 
         try {
             // Getting the carts
-            try (java.sql.PreparedStatement pstmtGetCarts = conn.prepareStatement(sqlGetCarts)) {
+            try (PreparedStatement pstmtGetCarts = conn.prepareStatement(sqlGetCarts)) {
                 pstmtGetCarts.setInt(1, customer_id);
 
-                try (java.sql.ResultSet rsGetCarts = pstmtGetCarts.executeQuery()) {
+                try (ResultSet rsGetCarts = pstmtGetCarts.executeQuery()) {
                     // No rows found
                     if (!rsGetCarts.next()) {
                         return new Cart(); // Customer doesn't have a cart so they have their cart empty
@@ -509,11 +509,11 @@ public final class StoreFront {
                 cart = new Cart();
 
                 // Getting the product itself
-                try (java.sql.PreparedStatement pstmtGetProducts = conn.prepareStatement(sqlGetProducts)) {
+                try (PreparedStatement pstmtGetProducts = conn.prepareStatement(sqlGetProducts)) {
                     pstmtGetProducts.setInt(1, cart_id);
 
                     // Result of getting the products for that cart
-                    try (java.sql.ResultSet rsGetProducts = pstmtGetProducts.executeQuery()) {
+                    try (ResultSet rsGetProducts = pstmtGetProducts.executeQuery()) {
 
                         // Each product in the cart
                         while (rsGetProducts.next()) {

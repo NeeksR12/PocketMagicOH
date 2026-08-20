@@ -21,11 +21,6 @@ public class ReportInventoryCMD extends Command{
 
 
     // Constructor
-    /**
-     * Parameter Constructor
-     * @param i The input string (Should be "REPORT INVENTORY;")
-     * @param inv The inventory being the list of cards at the store
-     */
     public ReportInventoryCMD(String i, Inventory inv, Customers c) {
         super(i, inv, c);
     }
