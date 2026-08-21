@@ -2,6 +2,7 @@ package databases;
 
 
 import entities.Cart;
+import entities.products.Bundle;
 import entities.products.ProductGroup;
 import entities.products.items.Card;
 import entities.products.Product;
@@ -14,7 +15,7 @@ import java.util.*;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 20th, 2026
  */
 public class Inventory {
 
@@ -179,6 +180,44 @@ public class Inventory {
         throw new NoSuchElementException("Error, this card is not in the inventory."); // Not found
     }
 
+
+    // Bundle specific operations
+    /**
+     * Description: Checks if a bundle is in the inventory and returns a boolean
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: Boolean is returned
+     * @param name The name of the bundle
+     * @return The boolean if found
+     */
+    public Boolean hasBundle(String name) {
+        for (Product p : inv.values()) {
+            if (p instanceof Bundle b) {
+                if (b.getName().equals(name))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Description: Looks for a bundle in the inventory by its name
+     * Pre-Condition: Inventory is initialized
+     * Post-Condition: Bundle is returned or exception is thrown
+     * @param name The name of the bundle being searched for
+     * @return The bundle if found
+     * @throws NoSuchElementException if not found
+     */
+    public Bundle getBundleByName(String name) throws NoSuchElementException{
+        for (Product p : inv.values()) {
+            if (p instanceof Bundle b) {
+                if (b.getName().equals(name))
+                    return b; // Found
+            }
+        }
+        throw new NoSuchElementException("Error, this bundle is not in the inventory."); // Not found
+    }
+
+    // General Class Operations
     /**
      * Description: Checks if there is stock in the inventory
      * Pre-Condition: The inventory object is initialized
@@ -189,8 +228,6 @@ public class Inventory {
         return !inv.isEmpty();
     }
 
-
-    // General Class Operations
     /**
      * Description: Removes the stock from the inventory from the items in the given cart
      * Pre-Condition: Desired quantities in cart should be greater than the stock of the product and cart is not null
