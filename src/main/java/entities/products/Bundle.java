@@ -10,11 +10,11 @@ import java.util.Map;
  * Description: A collection of other products that are sold together in a pre-determined group
  * Name: Nico Rotella
  * Date Created: August 5th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 20th, 2026
  */
 
 // Class
-public class Bundle implements Product, ProductGroup {
+public class Bundle implements Product, ProductGroup<Product, Item> {
     
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
@@ -158,7 +158,7 @@ public class Bundle implements Product, ProductGroup {
                 items.merge(item, quantity, Integer::sum);
             }
             // Collapsing the product into its items
-            else if (product instanceof ProductGroup productGroup) {
+            else if (product instanceof ProductGroup<?, ?> productGroup) { // <?> product group of unknown types
                 for (var subEntry : productGroup.toItems().entrySet()) {
                     items.merge(subEntry.getKey(), subEntry.getValue() * quantity, Integer::sum);
                 }
@@ -168,8 +168,10 @@ public class Bundle implements Product, ProductGroup {
     }
 
     /**
-     *
-     * @return
+     * Description: Gives the string value of the bundle
+     * Pre-Condition: This bundle is initialized
+     * Post-Condition: String is returned
+     * @return The string value of the bundle
      */
     @Override
     public String toString() {

@@ -1,8 +1,6 @@
 package entities.products.items;
 
 
-import entities.products.Product;
-
 /**
  * Card
  * Description: Class for card objects. Each card contains its own attributes such as element, rarity, etc.
@@ -38,7 +36,7 @@ public class Card implements Item {
     }
 
     /**
-     * Description: Gives the string value of the card, this is what is to be displayed in inventory
+     * Description: Gives the string value of the card
      * Pre-Condition: This card is initialized
      * Post-Condition: String is returned
      * @return The string value of the card
@@ -114,11 +112,13 @@ public class Card implements Item {
     }
 
     public void setPrice(int p) {
-        price = p;
+        if (p >= 1)
+            price = p;
     }
 
     public void setStock(int s) {
-        stock = s;
+        if (s >= 0)
+            stock = s;
     }
 
     @Override

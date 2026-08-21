@@ -5,23 +5,23 @@ import entities.products.items.Item;
 import java.util.Map;
 
 /**
- * Expandable
- * Description: An object is expandable if it holds products and needs to be able to flatten those products into items
+ * ProductGroup
+ * Description: An object is a product group if it holds products and needs to be able to flatten those products into items
  * Name: Nico Rotella
  * Date Created: August 5th, 2026
- * Last Edited: August 8th, 2026
+ * Last Edited: August 20th, 2026
  */
 
 // Interface
-public interface ProductGroup {
+public interface ProductGroup<T extends Product, U extends Item> {
 
-    void add(Product product, Integer quantity);
-    void remove(Product product, Integer quantity);
-    void delete(Product product);
+    void add(T product, Integer quantity);
+    void remove(T product, Integer quantity);
+    void delete(T product);
     void empty();
     boolean hasProduct(String name);
     Integer quantityOf(String name) throws IllegalArgumentException;
     boolean isEmpty();
-    Map<Item, Integer> toItems();
+    Map<U, Integer> toItems();
 
 }

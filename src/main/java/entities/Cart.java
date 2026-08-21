@@ -16,7 +16,7 @@ import java.util.Map;
  */
 
 // Class
-public class Cart implements ProductGroup {
+public class Cart implements ProductGroup<Product, Item> {
 
     // Attributes
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
@@ -147,7 +147,7 @@ public class Cart implements ProductGroup {
                 items.merge(item, quantity, Integer::sum);
             }
             // Collapsing the product into its items
-            else if (product instanceof ProductGroup productGroup) {
+            else if (product instanceof ProductGroup<?, ?> productGroup) {
                 for (var subEntry : productGroup.toItems().entrySet()) {
                     items.merge(subEntry.getKey(), subEntry.getValue() * quantity, Integer::sum);
                 }
