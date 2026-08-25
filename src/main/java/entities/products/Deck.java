@@ -1,5 +1,6 @@
 package entities.products;
 
+import entities.Persistable;
 import entities.products.items.Card;
 
 import java.util.HashMap;
@@ -10,11 +11,11 @@ import java.util.Map;
  * Description: A collection of cards that are intended to be played together in the PMO Game
  * Name: Nico Rotella
  * Date Created: August 20th, 2026
- * Last Edited: August 24th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
-public class Deck implements ProductGroup<Card, Card> {
+public class Deck implements ProductGroup<Card, Card>, Persistable {
 
     // Attributes
     private final Map<Card, Integer> cards = new HashMap<>();
@@ -181,8 +182,19 @@ public class Deck implements ProductGroup<Card, Card> {
         return cards;
     }
 
+    // Does the same thing but for readability purposes
+    public Map<Card, Integer> getCards() {
+        return cards;
+    }
+
+    @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public Integer getId() {
+        return id;
     }
 
     // Setter

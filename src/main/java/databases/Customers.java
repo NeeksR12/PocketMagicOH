@@ -2,7 +2,6 @@ package databases;
 
 import entities.Customer;
 import entities.products.Product;
-import entities.products.ProductGroup;
 
 import java.util.*;
 
@@ -11,21 +10,21 @@ import java.util.*;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
 public class Customers {
 
     // Attributes
-    private final Map<String, Customer> shoppers = new LinkedHashMap<String, Customer>();
-    private final Set<Customer> dirtyShoppers = new LinkedHashSet<Customer>();
-    private final Set<Customer> deletedShoppers = new LinkedHashSet<Customer>();
+    private final TrackedCollection<Customer> shoppers = new TrackedCollection<>();
+
 
     // Constructor
     public Customers() {}
 
 
+    // Tracked collection methods
     /**
      * Description: Checks if a customer is a shopper by name and returns a boolean
      * Pre-Condition: Customers is initialized
@@ -33,8 +32,8 @@ public class Customers {
      * @param name The name of the customer
      * @return The boolean if found
      */
-    public boolean isCustomerAShopper(String name) {
-        return shoppers.containsKey(name);
+    public boolean hasCustomer(String name) {
+        return shoppers.has(name);
     }
 
     /**
@@ -46,12 +45,12 @@ public class Customers {
      * @throws NoSuchElementException if not found
      */
     public Customer getCustomerByName(String name) throws NoSuchElementException {
-        Customer c = shoppers.get(name);
-
-        if (c == null)
-            throw new NoSuchElementException("Error, this customer is not a shopper."); // Not found
-        else
-            return c; // Found
+        try {
+            return shoppers.getByName(name);
+        }
+        catch (NoSuchElementException e) {
+            throw new NoSuchElementException("Error, this customer is not a shopper.");
+        }
     }
 
     /**
@@ -61,16 +60,47 @@ public class Customers {
      * @param c The customer
      * @throws IllegalArgumentException if the customer is already a shopper
      */
-    public void addShopper(Customer c) {
-        if (!isCustomerAShopper(c.getName())) {
-            shoppers.put(c.getName(), c);
-            markDirty(c);
+    public void addCustomer(Customer c) {
+        try {
+            shoppers.add(c);
         }
-        else
+        catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("Error, %s is already a shopper therefore cannot be added."
                     , c.getName()));
+        }
     }
 
+    /**
+     * Description: Takes a customer and marks it as dirty for the DB to worry about
+     * Pre-Condition: Should only mark a customer dirty if being created or updated (including its carts)
+     * Post_Condition: The customer is marked dirty
+     * @param c The customer
+     */
+    public void markDirty(Customer c) {
+        shoppers.markDirty(c);
+    }
+
+    /**
+     * Definition: Takes a customer and marks it as a deleted customer for the DB to worry about
+     * Pre-Condition: Param is a customer that is a shopper
+     * Post-Condition: The customer is ready to be deleted from the DB and is removed from shoppers
+     * @param c The customer
+     */
+    private void markDeleted(Customer c) {
+        shoppers.markDeleted(c);
+    }
+
+    /**
+     * Description: Clears the dirty and deleted sets
+     * Pre-Condition: None
+     * Post-Condition: Dirty and deleted sets are cleared
+     */
+    public void clearDirtyTracking() {
+        shoppers.clearDirtyTracking();
+    }
+
+
+    // General customer operations
     /**
      * Description: Removes a shopper by name
      * Pre-Condition: Customers is initialized
@@ -78,7 +108,7 @@ public class Customers {
      * @param name The name of the customer
      * @throws IllegalArgumentException if the customer is not a shopper
      */
-    public void removeShopperByName(String name) throws IllegalArgumentException {
+    public void removeCustomerByName(String name) throws IllegalArgumentException {
 
         // Variables and objects
         Customer customer;
@@ -97,38 +127,14 @@ public class Customers {
     }
 
     /**
-     * Description: Takes a customer and marks it as dirty for the DB to worry about
-     * Pre-Condition: Should only mark a customer dirty if being created or updated (including its carts)
-     * Post_Condition: The customer is marked dirty
-     * @param c The customer
-     */
-    public void markDirty(Customer c) {
-        dirtyShoppers.add(c);
-    }
-
-    /**
-     * Definition: Takes a customer and marks it as a deleted customer for the DB to worry about
-     * Pre-Condition: Param is a customer that is a shopper
-     * Post-Condition: The customer is ready to be deleted from the DB and is removed from shoppers
-     * @param c The customer
-     */
-    private void markDeleted(Customer c) {
-        dirtyShoppers.remove(c);
-        if (c.getId() != null) { // Checking if the product has been in the DB before
-            deletedShoppers.add(c); // It has, .'. needs to be deleted
-        }
-        shoppers.remove(c.getName());
-    }
-
-    /**
-     * Description: Deletes a product from all customers carts. Only to be used if the product itself is being deleted
+     * Description: Deletes a product from all customers. Only to be used if the product itself is being deleted. Failsafe.
      * Pre-Condition: Param must be a product and customers is initialized
-     * Post-Condition: The product is deleted from every cart
+     * Post-Condition: The product is deleted from every customer
      * @param product The product
      */
-    public void deleteProductFromAllCarts(Product product) {
+    public void deleteProductFromAllCustomers(Product product) {
         for (Customer c : shoppers.values()) {
-            c.getCart().delete(product);
+            c.deleteProduct(product);
         }
     }
 
@@ -139,24 +145,12 @@ public class Customers {
      * @param name The name of the product being checked
      * @return Boolean if in a product group
      */
-    public boolean isProductInCart(String name) {
+    public boolean isProductInACustomer(String name) {
         for (Customer c : shoppers.values()) {
-            for (Product p : c.getCart().getProducts().keySet()) {
-                if (p.getName().equals(name))
-                    return true;
-            }
+            if (c.containsProduct(name))
+                return true;
         }
         return false;
-    }
-
-    /**
-     * Description: Clears the dirty and deleted sets
-     * Pre-Condition: None
-     * Post-Condition: Dirty and deleted sets are cleared
-     */
-    public void clearDirtyTracking() {
-        dirtyShoppers.clear();
-        deletedShoppers.clear();
     }
 
     /**
@@ -179,11 +173,11 @@ public class Customers {
 
     // Getters
     public Set<Customer> getDirtyShoppers() {
-        return dirtyShoppers;
+        return shoppers.getDirty();
     }
 
     public Set<Customer> getDeletedShoppers() {
-        return deletedShoppers;
+        return shoppers.getDeleted();
     }
 
 }

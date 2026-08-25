@@ -2,6 +2,7 @@ package commands;
 
 
 import databases.*;
+import entities.Cart;
 import entities.Customer;
 import utils.Utils;
 
@@ -14,7 +15,7 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
@@ -25,7 +26,9 @@ public class CartCMD extends Command {
 
     // Attributes
     private Action action;
+    private String cartName;
     private Customer customer;
+    private Cart cart;
     private final Map<String, String> updates = new HashMap<String, String>();
 
 
@@ -162,7 +165,8 @@ public class CartCMD extends Command {
      */
     @Override
     public void run() {
-        customers.markDirty(customer); // Customer is always dirty after cart is manipulated
+        customers.markDirty(customer);
+        customer.markCartDirty()
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();

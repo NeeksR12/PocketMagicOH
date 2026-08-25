@@ -64,10 +64,10 @@ public class CustomerCMD extends Command {
 
         // Checking if the action is possible
         // CREATE - Checking if there is already a customer with this name shopping
-        if (action == Action.CREATE && customers.isCustomerAShopper(name))
+        if (action == Action.CREATE && customers.hasCustomer(name))
             throw new IllegalArgumentException(String.format("Error, %s is already a shopper.", name));
         // DELETE - Checking if this customer is actually a shopper
-        else if (action == Action.DELETE && !customers.isCustomerAShopper(name))
+        else if (action == Action.DELETE && !customers.hasCustomer(name))
             throw new IllegalArgumentException(String.format("Error, %s is not a shopper.", name));
     }
 
@@ -91,7 +91,7 @@ public class CustomerCMD extends Command {
      * Post-Condition: A customer with the given name has been created
      */
     private void create() {
-        customers.addShopper(new Customer(name)); // Marks dirty
+        customers.addCustomer(new Customer(name)); // Marks dirty
         output = String.format("customer %s created", name);
     }
 
@@ -101,7 +101,7 @@ public class CustomerCMD extends Command {
      * Post-Condition: The customer with the given name has been removed from shoppers
      */
     private void delete() {
-        customers.removeShopperByName(name); // Marks deleted
+        customers.removeCustomerByName(name); // Marks deleted
         output = String.format("customer %s deleted", name);
     }
 

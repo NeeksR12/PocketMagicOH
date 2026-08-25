@@ -119,7 +119,7 @@ public class CardCMD extends Command {
                             " the inventory.");
 
                 // Checking if any product groups contain the card
-                if (customers.isProductInCart(name) || inventory.isProductInProductGroup(name))
+                if (customers.isProductInACustomer(name) || inventory.isProductInProductGroup(name))
                     throw new IllegalArgumentException("Error, cannot delete this card because it is already being" +
                             " used");
             } // DELETE
@@ -182,7 +182,7 @@ public class CardCMD extends Command {
      * Post-Condition: The card has been removed and the output has been set
      */
     private void delete() {
-        customers.deleteProductFromAllCarts(inventory.getCardByName(name)); // Failsafe, should never do anything
+        customers.deleteProductFromAllCustomers(inventory.getCardByName(name)); // Failsafe, should never do anything
         inventory.removeProductByName(name); // Marks deleted
         output = String.format("card %s deleted", name);
     }

@@ -16,7 +16,7 @@ import utils.*;
  * Description: Main class for Pocket Magic Oh. Contains the inventory system
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: August 24th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
@@ -180,8 +180,10 @@ public final class StoreFront {
                 """
                 CREATE TABLE IF NOT EXISTS carts (
                 cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                customer_id INTEGER NOT NULL UNIQUE,
-                FOREIGN KEY(customer_id) REFERENCES customers(id)
+                customer_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                FOREIGN KEY(customer_id) REFERENCES customers(id),
+                UNIQUE(customer_id, name)
                 )""",
                 """
                 CREATE TABLE IF NOT EXISTS cart_items (
@@ -472,7 +474,7 @@ public final class StoreFront {
 
                 // Filling their cart
                 try {
-                    c.setCart(fillCarts(conn, id));
+                    c.setCarts(fillCarts(conn, id));
                 }
                 catch (RuntimeException e) {
                     System.out.println(e.getMessage());
@@ -487,7 +489,7 @@ public final class StoreFront {
                 }
 
                 // Adding the customer to the customers
-                customers.addShopper(c);
+                customers.addCustomer(c);
 
             } // For each customer
         } // Filling the customers
@@ -505,16 +507,16 @@ public final class StoreFront {
      * @return The cart object that was created
      * @throws RuntimeException if the sql is not successful.
      */
-    private static Cart fillCarts(Connection conn, int customer_id) {
+    private static TrackedCollection<Cart> fillCarts(Connection conn, int customer_id) {
 
         // Variables and objects
-        List<Integer> cart_ids = new ArrayList<Integer>(); // Modular for later
-        List<Cart> carts = new ArrayList<Cart>();
+        Map<Integer, String> cartInfo = new HashMap<>(); // id -> name
+        TrackedCollection<Cart> carts = new TrackedCollection<>();
         Cart cart;
 
         // SQL
         String sqlGetCarts = """
-                SELECT cart_id FROM carts
+                SELECT cart_id, name FROM carts
                 WHERE customer_id = ?"""; // Not a complete statement, requires customer_id
 
         String sqlGetProducts = """
@@ -530,20 +532,24 @@ public final class StoreFront {
                 try (ResultSet rsGetCarts = pstmtGetCarts.executeQuery()) {
                     // No rows found
                     if (!rsGetCarts.next()) {
-                        return new Cart(); // Customer doesn't have a cart so they have their cart empty
+                        return carts; // Customer doesn't have a cart so they have their cart empty
                     }
 
                     // They have cart(s)
                     do {
-                        cart_ids.add(rsGetCarts.getInt("cart_id"));
+                        cartInfo.put(rsGetCarts.getInt("cart_id"), rsGetCarts.getString("name"));
                     } while (rsGetCarts.next());
                 }
             }
 
             // Getting the products in each cart
-            for (Integer cart_id : cart_ids) {
+            for (var entry : cartInfo.entrySet()) {
 
-                cart = new Cart();
+                // Cart info
+                int cart_id = entry.getKey();
+                String name = entry.getValue();
+
+                cart = new Cart(name);
                 cart.setId(cart_id);
 
                 // Getting the product itself
@@ -573,14 +579,14 @@ public final class StoreFront {
             throw new RuntimeException("Database error while fetching cart", e);
         }
 
-        return carts.getFirst(); // Adapt later
+        return carts;
     } // fillCarts
 
-    private static Set<Deck> fillDecks(Connection conn, int customer_id) {
+    private static TrackedCollection<Deck> fillDecks(Connection conn, int customer_id) {
 
         // Variables and objects
         Map<Integer, String> deckInfo = new HashMap<Integer, String>(); // id -> name
-        Set<Deck> decks = new HashSet<>();
+        TrackedCollection<Deck> decks = new TrackedCollection<>();
         Deck deck;
 
         // SQL
@@ -650,7 +656,7 @@ public final class StoreFront {
         }
 
         return decks;
-    }
+    } // fillDecks
 
     /**
      * Description: Updates the DB with all the updates

@@ -51,7 +51,7 @@ public class ReportInventoryCMD extends Command{
 
         sb.append("\nINVENTORY\n");
         if (inventory.hasStock()) {
-            for (Product p : inventory.getInv().values()) {
+            for (Product p : inventory.getProducts().values()) {
                 if (p instanceof Item i)
                     sb.append(String.format("%s %d\n", i.getName(), i.getStock()));
                     // NOTE: Less resource intensive than +=, += creates a new string builder each iteration

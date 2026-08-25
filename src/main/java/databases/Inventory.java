@@ -15,20 +15,19 @@ import java.util.*;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: August 24th, 2026
+ * Last Edited: August 25th, 2026
  */
 public class Inventory {
 
     // Attributes
-    private final Map<String, Product> inv = new LinkedHashMap<String, Product>();
-    private final Set<Product> dirtyProducts = new LinkedHashSet<Product>();
-    private final Set<Product> deletedProducts = new LinkedHashSet<Product>();
+    private final TrackedCollection<Product> products = new TrackedCollection<>();
+
 
     // Constructor
     public Inventory() {}
 
 
-    // General Product Operations
+    // Tracked collection methods
     /**
      * Description: Checks if a product is in the inventory and returns a boolean
      * Pre-Condition: Inventory is initialized
@@ -37,7 +36,7 @@ public class Inventory {
      * @return The boolean if found
      */
     public boolean hasProduct(String name) {
-        return inv.containsKey(name);
+        return products.has(name);
     }
 
     /**
@@ -49,28 +48,12 @@ public class Inventory {
      * @throws NoSuchElementException if not found
      */
     public Product getProductByName(String name) throws NoSuchElementException {
-        Product p = inv.get(name);
-
-        if (p == null)
-            throw new NoSuchElementException("Error, this product is not in the inventory."); // Not found
-        else
-            return p; // Found
-    }
-
-    /**
-     * Description: Returns a product by its id
-     * Pre-Condition: Param is an int
-     * Post-Condition: The product is returned
-     * @param id The product id
-     * @return The product
-     * @throws NoSuchElementException if not found
-     */
-    public Product getProductById(int id) {
-        for (Product p : inv.values()) {
-            if (p.getId() != null && p.getId() == id)
-                return p;
+        try {
+            return products.getByName(name);
         }
-        throw new NoSuchElementException(String.format("Error, product id %d not found.", id));
+        catch (NoSuchElementException e){
+            throw new NoSuchElementException("Error, this product is not in the inventory.");
+        }
     }
 
     /**
@@ -81,12 +64,59 @@ public class Inventory {
      * @throws IllegalArgumentException if the card is already in the inventory
      */
     public void addProduct(Product p) {
-        if (!hasProduct(p.getName())) {
-            inv.put(p.getName(), p);
-            markDirty(p);
+        try {
+            products.add(p);
         }
-        else
+        catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Error, this product is already in the inventory therefore cannot be added.");
+        }
+    }
+
+    /**
+     * Description: Takes a product and marks it as dirty for the DB to worry about
+     * Pre-Condition: Should only mark a product dirty if being created or updated
+     * Post_Condition: The product is marked dirty
+     * @param p The product
+     */
+    public void markDirty(Product p) {
+        products.markDeleted(p);
+    }
+
+    /**
+     * Description: Takes a product and marks it as a deleted product for the DB to worry about
+     * Pre-Condition: Param is a product
+     * Post-Condition: The product is ready to be deleted from the DB and is removed from inv
+     * @param p The product
+     */
+    private void markDeleted(Product p) {
+        products.markDeleted(p);
+    }
+
+    /**
+     * Description: Clears the dirty and deleted sets
+     * Pre-Condition: None
+     * Post-Condition: Dirty and deleted sets are cleared
+     */
+    public void clearDirtyTracking() {
+        products.clearDirtyTracking();
+    }
+
+
+    // General Product Operations
+    /**
+     * Description: Returns a product by its id
+     * Pre-Condition: Param is an int
+     * Post-Condition: The product is returned
+     * @param id The product id
+     * @return The product
+     * @throws NoSuchElementException if not found
+     */
+    public Product getProductById(int id) {
+        for (Product p : products.values()) {
+            if (p.getId() != null && p.getId() == id)
+                return p;
+        }
+        throw new NoSuchElementException(String.format("Error, product id %d not found.", id));
     }
 
     /**
@@ -110,37 +140,13 @@ public class Inventory {
         }
 
         // Removing the product from any other product that may contain it
-        for (Product p: inv.values()) {
+        for (Product p: products.values()) {
             if (p instanceof ProductGroup<?, ?> pc && pc.hasProduct(name))
                 pc.deleteByName(name);
         }
 
         // Marking the product as deleted
         markDeleted(product);
-    }
-
-    /**
-     * Description: Takes a product and marks it as dirty for the DB to worry about
-     * Pre-Condition: Should only mark a product dirty if being created or updated
-     * Post_Condition: The product is marked dirty
-     * @param p The product
-     */
-    public void markDirty(Product p) {
-        dirtyProducts.add(p);
-    }
-
-    /**
-     * Description: Takes a product and marks it as a deleted product for the DB to worry about
-     * Pre-Condition: Param is a product
-     * Post-Condition: The product is ready to be deleted from the DB and is removed from inv
-     * @param p The product
-     */
-    private void markDeleted(Product p) {
-        dirtyProducts.remove(p);
-        if (p.getId() != null) { // Checking if the product has been in the DB before
-            deletedProducts.add(p); // It has, .'. needs to be deleted
-        }
-        inv.remove(p.getName());
     }
 
 
@@ -153,7 +159,7 @@ public class Inventory {
      * @return The boolean if found
      */
     public Boolean hasCard(String name) {
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof Card c) { // NOTE: This is called pattern notation, no need to declare and instantiate later
                 if (c.getName().equals(name))
                     return true;
@@ -171,7 +177,7 @@ public class Inventory {
      * @throws NoSuchElementException if not found
      */
     public Card getCardByName(String name) throws NoSuchElementException{
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof Card c) {
                 if (c.getName().equals(name))
                     return c; // Found
@@ -189,7 +195,7 @@ public class Inventory {
      * @throws NoSuchElementException if not found
      */
     public Card getCardById(int id) {
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof Card c && c.getId() != null && c.getId() == id)
                 return c;
         }
@@ -205,7 +211,7 @@ public class Inventory {
      * @return The boolean if found
      */
     public Boolean hasBundle(String name) {
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof Bundle b) {
                 if (b.getName().equals(name))
                     return true;
@@ -223,7 +229,7 @@ public class Inventory {
      * @throws NoSuchElementException if not found
      */
     public Bundle getBundleByName(String name) throws NoSuchElementException{
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof Bundle b) {
                 if (b.getName().equals(name))
                     return b; // Found
@@ -240,7 +246,7 @@ public class Inventory {
      * @return The boolean if there is stock
      */
     public boolean hasStock() {
-        return !inv.isEmpty();
+        return !products.isEmpty();
     }
 
     /**
@@ -274,16 +280,6 @@ public class Inventory {
     }
 
     /**
-     * Description: Clears the dirty and deleted sets
-     * Pre-Condition: None
-     * Post-Condition: Dirty and deleted sets are cleared
-     */
-    public void clearDirtyTracking() {
-        dirtyProducts.clear();
-        deletedProducts.clear();
-    }
-
-    /**
      * Description: Checks if a product is in a product group in the inventory
      * Pre-Condition: None
      * Post-Condition: Boolean is returned if product is in a product group
@@ -291,7 +287,7 @@ public class Inventory {
      * @return Boolean if in a product group
      */
     public boolean isProductInProductGroup(String name) {
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             if (p instanceof ProductGroup<?, ?> pg) {
                 if (pg.hasProduct(name))
                     return true; // Is in a product group
@@ -310,7 +306,7 @@ public class Inventory {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        for (Product p : inv.values()) {
+        for (Product p : products.values()) {
             sb.append(p.toString());
             sb.append("\n");
         }
@@ -319,16 +315,16 @@ public class Inventory {
     }
 
     // Getters
-    public Map<String, Product> getInv() {
-        return inv;
+    public TrackedCollection<Product> getProducts() {
+        return products;
     }
 
     public Set<Product> getDirtyProducts() {
-        return dirtyProducts;
+        return products.getDirty();
     }
 
     public Set<Product> getDeletedProducts() {
-        return deletedProducts;
+        return products.getDeleted();
     }
 
 }

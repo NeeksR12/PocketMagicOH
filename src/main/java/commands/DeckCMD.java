@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
  * Description: Deck command to handle all actions related to manipulating a deck
  * Name: Nico Rotella
  * Date Created: August 24th, 2026
- * Last Edited: August 24th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
@@ -26,7 +26,7 @@ public class DeckCMD extends Command {
 
     // Attributes
     private Action action;
-    private String name;
+    private String deckName;
     private Customer customer;
     private Deck deck;
     private final Map<String, String> updates = new HashMap<>();
@@ -52,7 +52,7 @@ public class DeckCMD extends Command {
 
         // Error, shouldn't get here but
         if (!tokens[0].equals("DECK")) {
-            throw new IllegalArgumentException("Error, DECK command must start with BUNDLE!");
+            throw new IllegalArgumentException("Error, DECK command must start with DECK!");
         }
 
         // Check if customer name is actually a customer
@@ -64,9 +64,9 @@ public class DeckCMD extends Command {
         }
 
         // Deck name to run command on
-        name = tokens[2];
+        deckName = tokens[2];
 
-        // Action being done with the bundle
+        // Action being done with the deck
         try {
             action = Action.valueOf(tokens[3]);
         }
@@ -83,7 +83,7 @@ public class DeckCMD extends Command {
             }
             else { // Malformed command
                 throw new IllegalArgumentException("Error, command not formatted correctly, expected a quantity" +
-                        " followed by a product.");
+                        " followed by a card.");
             }
 
             // If they have more arguments
@@ -101,7 +101,7 @@ public class DeckCMD extends Command {
                 }
                 else {
                     throw new IllegalArgumentException(String.format("Error, command not formatted correctly after %s."
-                            + " Expected \"AND quantity product\"", tokens[counter - 1]));
+                            + " Expected \"AND quantity card\"", tokens[counter - 1]));
                 }
                 counter += 3;
             } // Bonus updates
@@ -111,14 +111,14 @@ public class DeckCMD extends Command {
         switch (action) {
             case ADD -> {
                 // Setting the deck if the customer has it already (if not, is set later)
-                if (customer.hasDeck(name)) // Already existed
-                    deck = customer.getDeckByName(name);
+                if (customer.hasDeck(deckName)) // Already existed
+                    deck = customer.getDeckByName(deckName);
 
                 for (var entry : updates.entrySet()) {
-                    // Checking if this is a product we sell
-                    if (!inventory.hasProduct(entry.getKey())) {
-                        throw new IllegalArgumentException(String.format("Error, %s is not a product being sold at the " +
-                                "moment.", entry.getKey()));
+                    // Checking if this is a deck the customer has
+                    if (!customer.hasDeck(entry.getKey())) {
+                        throw new IllegalArgumentException(String.format("Error, %s is not a deck that %s owns.", 
+                                entry.getKey(), customer.getName()));
                     }
                     // Checking that their desired quantity was a positive integer
                     if (!Utils.isNumeric(entry.getValue())) { // Was not a number
@@ -130,11 +130,63 @@ public class DeckCMD extends Command {
                     }
                 }
             } // ADD
+            case REMOVE -> {
+                // Checking if the customer has this deck
+                try {
+                    deck = customer.getDeckByName(deckName);
+                } catch (NoSuchElementException e) {
+                    throw new IllegalArgumentException("Error, the customer does not have the deck that is trying " +
+                            "to be updated.");
+                }
 
+                for (var entry : updates.entrySet()) {
+                    // Checking that this is a card in this deck
+                    if (!deck.hasProduct(entry.getKey())) { // This is only cards since deck implements pg<Card>
+                        throw new IllegalArgumentException(String.format("Error, %s is not a card in %s's deck.",
+                                entry.getKey(), deck.getName()));
+                    }
+                    // Checking that their desired quantity was a positive integer
+                    if (!Utils.isNumeric(entry.getValue())) { // Was not a number
+                        throw new IllegalArgumentException(String.format("Error, the quantity requested for %s " +
+                                "must be a positive integer.", entry.getKey()));
+                    } else if (Integer.parseInt(entry.getValue()) < 0) { // Was a number but was negative
+                        throw new IllegalArgumentException(String.format("Error, desired quantity to ADD of %s " +
+                                "must be positive.", entry.getKey()));
+                    }
+                    // Checking that it is possible to remove that many of this card from the deck
+                    if (deck.quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
+                        throw new IllegalArgumentException(String.format("Error, cannot remove %s of %s from %s since" +
+                                        " it only contains %d.", entry.getValue(), entry.getKey(), deck.getName(),
+                                deck.quantityOf(entry.getKey())));
+                    }
+                }
+            } // REMOVE
+            case CLEAR -> {
+                // Checking if the customer has this deck
+                try {
+                    deck = customer.getDeckByName(deckName);
+                } catch (NoSuchElementException e) {
+                    throw new IllegalArgumentException("Error, the customer does not have the deck that is trying " +
+                            "to be updated.");
+                }
 
-        }
-
-    }
+                // Checking that there are no more arguments after the action
+                if (tokens.length > 4) {
+                    throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s %s.",
+                            tokens[0], tokens[1], tokens[2], tokens[3]));
+                }
+            } // CLEAR
+            case DELETE -> {
+                // Checking if the customer has this deck
+                try {
+                    deck = customer.getDeckByName(deckName);
+                } catch (NoSuchElementException e) {
+                    throw new IllegalArgumentException("Error, the customer does not have the deck that is trying " +
+                            "to be updated.");
+                }
+            } // DELETE
+        } // switch
+    } // parse
 
     /**
      * Description: Actually runs the command, updating as required and setting output
@@ -143,7 +195,15 @@ public class DeckCMD extends Command {
      */
     @Override
     public void run() {
-
+        customers.markDirty(customer);
+        customer.markDeckDirty(deck);
+        switch (action) {
+            case ADD -> add();
+            case REMOVE -> remove();
+            case CLEAR -> clear();
+            case DELETE -> delete();
+            default -> output = "Error this was not a valid DECK command.";
+        }
 
     }
 

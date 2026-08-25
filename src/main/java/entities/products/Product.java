@@ -1,20 +1,19 @@
 package entities.products;
 
+import entities.Persistable;
+
 /**
  * Product
  * Description: Contains methods and general things that a product should have in order to be in the inventory and sold
  * Name: Nico Rotella
  * Date Created: July 28th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Interface
-public interface Product {
+public interface Product extends Persistable {
 
-    String getName();
     int getPrice();
-    Integer getId();
-    void setId(Integer i);
     String getType();
     String toString();
 

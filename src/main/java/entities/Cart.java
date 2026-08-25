@@ -12,19 +12,22 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 24th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
-public class Cart implements ProductGroup<Product, Item> {
+public class Cart implements ProductGroup<Product, Item>, Persistable {
 
     // Attributes
+    private final String name;
     private final Map<Product, Integer> products = new HashMap<Product, Integer>();
     private Integer id;
 
 
     // Constructors
-    public Cart() {}
+    public Cart(String n) {
+        name = n;
+    }
 
     /**
      * Description: Adds or updates a cart product
@@ -186,6 +189,8 @@ public class Cart implements ProductGroup<Product, Item> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
+        sb.append(String.format("\n CART - %s", name));
+
         for (var entry : products.entrySet())
             sb.append(String.format("\n%s - %d", entry.getKey().getName(), entry.getValue()));
 
@@ -197,11 +202,18 @@ public class Cart implements ProductGroup<Product, Item> {
         return products;
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public Integer getId() {
         return id;
     }
 
     // Setters
+    @Override
     public void setId(Integer i) {
         id = i;
     }

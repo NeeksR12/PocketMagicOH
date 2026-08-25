@@ -2,6 +2,7 @@ package databases;
 
 import entities.Cart;
 import entities.Customer;
+import entities.products.Deck;
 
 import java.sql.*;
 
@@ -10,7 +11,7 @@ import java.sql.*;
  * Description: Helper class to take a customers object and store it in a DB
  * Name: Nico Rotella
  * Date Created: August 19th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 25th, 2026
  */
 
 // Class
@@ -76,6 +77,7 @@ public final class CustomersRepository {
             }
         }
 
+        // Figure out how adding a new customer works with adding its decks and carts and such
         // Adding its cart to the carts table
         try (PreparedStatement pstmtAddCart = conn.prepareStatement(sqlAddCart, Statement.RETURN_GENERATED_KEYS)) {
             pstmtAddCart.setInt(1, c.getId());
@@ -93,6 +95,10 @@ public final class CustomersRepository {
         saveCartItems(conn, c.getCart());
     }
 
+    private static void insertCart(Connection conn, Cart c) {
+
+    }
+
     /**
      * Description: Updates an existing customer in the DB
      * Pre-Condition: All customers must have an id already and connection is set up properly
@@ -103,22 +109,26 @@ public final class CustomersRepository {
      */
     private static void update(Connection conn, Customer c) throws SQLException {
 
-        /*
-        // SQL
-        String sql = "DELETE FROM customers WHERE customer_id = ?"; // Not complete statement, needs customer_id
+        // Dirty carts in the customer
+        for (Cart cart : c.getDirtyCarts()) {
+            // Checking if this is a new cart
+            if (cart.getId() == null) {
+                insertCart(conn, cart);
+            }
 
-        // Removing the current version of the customer
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, c.getId());
-
-            pstmt.executeUpdate();
+            saveCartItems(conn, cart);
         }
 
-        // Adding the current version of the customer
-        insert(conn, c);
+        // Dirty decks in the customer
+        for (Deck deck : c.getDirtyDecks()) {
+            // Checking if this is a new deck
+            if (deck.getId() == null) {
+                insertDeck(conn, deck);
+            }
 
-         */
-        saveCartItems(conn, c.getCart());
+            saveDeckCards(conn, deck);
+        }
+
     }
 
     /**
@@ -162,6 +172,46 @@ public final class CustomersRepository {
     }
 
     /**
+     * Description: Saves the contents of a deck to the deck_cards table in the DB
+     * Pre-Condition: All dirty products have been added to the DB, no inserting still needs to be done and connection
+     * is set up properly
+     * Post-Condition: This deck has its items saved properly in the DB
+     * @param conn The connection to the DB
+     * @param d The deck
+     * @throws SQLException if there is an SQL issue
+     */
+    private static void saveDeckCards(Connection conn, Deck d) throws SQLException{
+
+        // SQL
+        String sqlDeleteDeckCards = "DELETE FROM deck_cards WHERE deck_id = ?"; // Not complete statement, needs deck_id
+
+        String sqlUpdateDeckCards = "INSERT INTO deck_cards (deck_id, card_id, quantity) VALUES (?, ?, ?)";
+        // Not complete statement, needs values
+
+        // Removing all items currently in cart in DB
+        try (PreparedStatement pstmtDeleteDeckCards = conn.prepareStatement(sqlDeleteDeckCards)) {
+            pstmtDeleteDeckCards.setInt(1, d.getId());
+
+            pstmtDeleteDeckCards.executeUpdate();
+        }
+
+        // Adding all of them properly back
+        try (PreparedStatement pstmtUpdateDeckCards = conn.prepareStatement(sqlUpdateDeckCards)) {
+            // Adding values
+            for (var entry : d.getCards().entrySet()) {
+                pstmtUpdateDeckCards.setInt(1, d.getId()); // deck_id
+                pstmtUpdateDeckCards.setInt(2, entry.getKey().getId()); // card_id
+                pstmtUpdateDeckCards.setInt(3, entry.getValue()); // quantity
+
+                pstmtUpdateDeckCards.addBatch();
+            }
+
+            // Running the batch
+            pstmtUpdateDeckCards.executeBatch();
+        }
+    }
+
+    /**
      * Description: Removes a customer from the DB
      * Pre-Condition: This customer is already in the DB and connection is set up properly
      * Post-Condition: This customer no longer exists in the DB
@@ -178,29 +228,59 @@ public final class CustomersRepository {
         String sqlRemoveFromCarts = "DELETE FROM carts WHERE customer_id = ?";
         // Not complete statement, needs customer_id
 
+        String sqlRemoveFromDeckCards = "DELETE FROM deck_cards WHERE deck_id = ?";
+        // Not complete statement, needs deck_id
+
+        String sqlRemoveFromDecks = "DELETE FROM decks WHERE customer_id = ?";
+        // Not complete statement, needs customer_id
+
         String sqlRemoveFromCustomers = "DELETE FROM customers WHERE id = ?";
         // Not complete statement, needs id
 
         // Removing from cart_items
         try (PreparedStatement pstmtRemoveFromCartItems = conn.prepareStatement(sqlRemoveFromCartItems)) {
-            pstmtRemoveFromCartItems.setInt(1, c.getCart().getId());
+            for (Cart cart : c.getCarts().values()) {
+                pstmtRemoveFromCartItems.setInt(1, cart.getId()); // cart_id
 
-            pstmtRemoveFromCartItems.executeUpdate();
+                pstmtRemoveFromCartItems.addBatch();
+            }
+
+            // Running the batch
+            pstmtRemoveFromCartItems.executeBatch();
         }
 
         // Removing from carts
         try (PreparedStatement pstmtRemoveFromCarts = conn.prepareStatement(sqlRemoveFromCarts)) {
-            pstmtRemoveFromCarts.setInt(1, c.getId());
+            pstmtRemoveFromCarts.setInt(1, c.getId()); // customer_id
 
             pstmtRemoveFromCarts.executeUpdate();
         }
 
-        // Remove from products
+        // Removing from deck_cards
+        try (PreparedStatement pstmtRemoveFromDeckCards = conn.prepareStatement(sqlRemoveFromDeckCards)) {
+            for (Deck deck : c.getDecks().values()) {
+                pstmtRemoveFromDeckCards.setInt(1, deck.getId()); // deck_id
+
+                pstmtRemoveFromDeckCards.addBatch();
+            }
+
+            // Running the batch
+            pstmtRemoveFromDeckCards.executeBatch();
+        }
+
+        // Removing from carts
+        try (PreparedStatement pstmtRemoveFromDecks = conn.prepareStatement(sqlRemoveFromDecks)) {
+            pstmtRemoveFromDecks.setInt(1, c.getId()); // customer_id
+
+            pstmtRemoveFromDecks.executeUpdate();
+        }
+
+        // Remove from customers
         try (PreparedStatement pstmtRemoveFromCustomers = conn.prepareStatement(sqlRemoveFromCustomers)) {
-            pstmtRemoveFromCustomers.setInt(1, c.getId());
+            pstmtRemoveFromCustomers.setInt(1, c.getId()); // id
 
             pstmtRemoveFromCustomers.executeUpdate();
         }
-    }
+    } // delete
     
 }

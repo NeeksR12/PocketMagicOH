@@ -175,7 +175,7 @@ public class BundleCMD extends Command {
                 }
 
                 // Checking if any product groups contain the bundle
-                if (customers.isProductInCart(name) || inventory.isProductInProductGroup(name))
+                if (customers.isProductInACustomer(name) || inventory.isProductInProductGroup(name))
                     throw new IllegalArgumentException("Error, cannot delete this bundle because it is already being" +
                             " used");
             } // DELETE
@@ -247,7 +247,7 @@ public class BundleCMD extends Command {
      * Post-Condition: The bundle has been removed and the output has been set
      */
     private void delete() {
-        customers.deleteProductFromAllCarts(bundle); // Failsafe, should never execute
+        customers.deleteProductFromAllCustomers(bundle); // Failsafe, should never execute
         inventory.removeProductByName(name); // Marks deleted
         output = String.format("bundle %s deleted", name);
     }
