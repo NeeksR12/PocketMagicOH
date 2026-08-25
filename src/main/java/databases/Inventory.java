@@ -15,7 +15,7 @@ import java.util.*;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: August 20th, 2026
+ * Last Edited: August 24th, 2026
  */
 public class Inventory {
 
@@ -59,7 +59,7 @@ public class Inventory {
 
     /**
      * Description: Returns a product by its id
-     * Pre-Condition: Param is an int and should be between 1 and inv.length()
+     * Pre-Condition: Param is an int
      * Post-Condition: The product is returned
      * @param id The product id
      * @return The product
@@ -111,8 +111,8 @@ public class Inventory {
 
         // Removing the product from any other product that may contain it
         for (Product p: inv.values()) {
-            if (p instanceof ProductGroup pc && pc.hasProduct(name))
-                pc.delete(product);
+            if (p instanceof ProductGroup<?, ?> pc && pc.hasProduct(name))
+                pc.deleteByName(name);
         }
 
         // Marking the product as deleted
@@ -180,6 +180,21 @@ public class Inventory {
         throw new NoSuchElementException("Error, this card is not in the inventory."); // Not found
     }
 
+    /**
+     * Description: Returns a card by its id
+     * Pre-Condition: Param is an int
+     * Post-Condition: The card is returned
+     * @param id The card id
+     * @return The card
+     * @throws NoSuchElementException if not found
+     */
+    public Card getCardById(int id) {
+        for (Product p : inv.values()) {
+            if (p instanceof Card c && c.getId() != null && c.getId() == id)
+                return c;
+        }
+        throw new NoSuchElementException(String.format("Error, card id %d not found.", id));
+    }
 
     // Bundle specific operations
     /**
@@ -277,7 +292,7 @@ public class Inventory {
      */
     public boolean isProductInProductGroup(String name) {
         for (Product p : inv.values()) {
-            if (p instanceof ProductGroup pg) {
+            if (p instanceof ProductGroup<?, ?> pg) {
                 if (pg.hasProduct(name))
                     return true; // Is in a product group
             }

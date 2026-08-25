@@ -6,6 +6,7 @@ import databases.*;
 import entities.Cart;
 import entities.Customer;
 import entities.products.Bundle;
+import entities.products.Deck;
 import entities.products.Product;
 import entities.products.items.Card;
 import utils.*;
@@ -15,7 +16,7 @@ import utils.*;
  * Description: Main class for Pocket Magic Oh. Contains the inventory system
  * Name: Nico Rotella
  * Date Created: May 5th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 24th, 2026
  */
 
 // Class
@@ -190,6 +191,21 @@ public final class StoreFront {
                 PRIMARY KEY(cart_id, product_id),
                 FOREIGN KEY(cart_id) REFERENCES carts(cart_id),
                 FOREIGN KEY(product_id) REFERENCES products(id)
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS decks (
+                deck_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                FOREIGN KEY(customer_id) REFERENCES customers(id)
+                )""",
+                """
+                CREATE TABLE IF NOT EXISTS deck_cards (
+                deck_id INTEGER,
+                card_id INTEGER,
+                quantity INTEGER NOT NULL,
+                PRIMARY KEY(deck_id, card_id),
+                FOREIGN KEY(deck_id) REFERENCES decks(deck_id),
+                FOREIGN KEY(card_id) REFERENCES cards(product_id)
                 )"""
         };
 
@@ -422,7 +438,7 @@ public final class StoreFront {
 
     /**
      * Description: Fills the customers from all the info in the database
-     * Pre-Condition: Connection has been passed properly
+     * Pre-Condition: Connection has been passed properly, inventory has been filled
      * Post-Condition: Customers object is filled
      * @param conn The connection to the database
      */
@@ -458,10 +474,15 @@ public final class StoreFront {
                 try {
                     c.setCart(fillCarts(conn, id));
                 }
-                catch (IllegalArgumentException e) { // Catches a bad product type enum
-                    System.out.println("Error, invalid product type in database.");
+                catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
                 }
-                catch (RuntimeException e) { // Also catches the NoSuchElementException, from parseCard/Bundle
+
+                // Adding their decks
+                try {
+                    c.setDecks(fillDecks(conn, id));
+                }
+                catch (RuntimeException e) {
                     System.out.println(e.getMessage());
                 }
 
@@ -554,6 +575,82 @@ public final class StoreFront {
 
         return carts.getFirst(); // Adapt later
     } // fillCarts
+
+    private static Set<Deck> fillDecks(Connection conn, int customer_id) {
+
+        // Variables and objects
+        Map<Integer, String> deckInfo = new HashMap<Integer, String>(); // id -> name
+        Set<Deck> decks = new HashSet<>();
+        Deck deck;
+
+        // SQL
+        String sqlGetDecks = """
+                SELECT deck_id, name FROM decks
+                WHERE customer_id = ?"""; // Not a complete statement, requires customer_id
+
+        String sqlGetCards = """
+                SELECT * FROM deck_cards
+                WHERE deck_id = ?"""; // Not complete statement, needs deck_id number
+
+
+        try {
+            // Getting the decks
+            try (PreparedStatement pstmtGetDecks = conn.prepareStatement(sqlGetDecks)) {
+                pstmtGetDecks.setInt(1, customer_id);
+
+                try (ResultSet rsGetDecks = pstmtGetDecks.executeQuery()) {
+                    // No rows found
+                    if (!rsGetDecks.next()) {
+                        return decks; // Customer doesn't have any decks so they have their decks empty
+                    }
+
+                    // They have deck(s)
+                    do {
+                        deckInfo.put(rsGetDecks.getInt("deck_id"), rsGetDecks.getString("name"));
+                    } while (rsGetDecks.next());
+                }
+            }
+
+            // Getting the cards in each deck
+            for (var entry : deckInfo.entrySet()) {
+
+                // Deck info
+                int deck_id = entry.getKey();
+                String name = entry.getValue();
+
+                // The current deck object
+                deck = new Deck(name);
+                deck.setId(deck_id);
+
+                // Getting the cards itself
+                try (PreparedStatement pstmtGetCards = conn.prepareStatement(sqlGetCards)) {
+                    pstmtGetCards.setInt(1, deck_id);
+
+                    // Result of getting the cards for that deck
+                    try (ResultSet rsGetCards = pstmtGetCards.executeQuery()) {
+
+                        // Each card in the deck
+                        while (rsGetCards.next()) {
+                            Card card = inventory.getCardById(rsGetCards.getInt("card_id"));
+                            Integer quantity = rsGetCards.getInt("quantity");
+
+                            // Adding the card
+                            deck.add(card, quantity);
+                        }
+                    }
+                }
+
+                // Adding the filled cart
+                decks.add(deck);
+
+            } // For each cart the customer has
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching cart", e);
+        }
+
+        return decks;
+    }
 
     /**
      * Description: Updates the DB with all the updates

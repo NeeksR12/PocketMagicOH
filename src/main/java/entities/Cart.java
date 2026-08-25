@@ -12,7 +12,7 @@ import java.util.Map;
  * Description: Cart object to hold a customers shopping cart with their purchases
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 24th, 2026
  */
 
 // Class
@@ -33,6 +33,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * @param product The product being added to the cart
      * @param quantity The quantity of the product being added to the cart
      */
+    @Override
     public void add(Product product, Integer quantity) {
         products.merge(product, quantity, Integer::sum);
     }
@@ -44,6 +45,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * @param product The product being removed from the cart
      * @param quantity The quantity of the product being removed from the cart
      */
+    @Override
     public void remove(Product product, Integer quantity) {
         // Taking that product out of their cart
         products.computeIfPresent(product, (k, v) -> v - quantity);
@@ -58,8 +60,23 @@ public class Cart implements ProductGroup<Product, Item> {
      * Post-Condition: The cart has this product deleted from it
      * @param product The product being deleted
      */
+    @Override
     public void delete(Product product) {
         products.remove(product);
+    }
+
+    /**
+     * Description: Deletes a product from the cart entirely, by name
+     * Pre-Condition: Param is a string
+     * Post-Condition: The cart has this product deleted from it
+     * @param name The name of the product being deleted
+     */
+    @Override
+    public void deleteByName(String name) {
+        for (Product p : products.keySet()) {
+            if (p.getName().equals(name))
+                products.remove(p);
+        }
     }
 
     /**
@@ -67,6 +84,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * Pre-Condition: None
      * Post-Condition: The cart is cleared and has zero products
      */
+    @Override
     public void empty() {
         products.clear();
     }
@@ -78,6 +96,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * @param name The name of the product
      * @return The boolean if found
      */
+    @Override
     public boolean hasProduct(String name) {
         for (Product p : products.keySet()) {
             if (p.getName().equals(name))
@@ -108,6 +127,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * @return The quantity of the product in the cart
      * @throws IllegalArgumentException if there is no product with that name in the cart
      */
+    @Override
     public Integer quantityOf(String name) throws IllegalArgumentException {
         for (var entry : products.entrySet()) {
             if (entry.getKey().getName().equals(name))
@@ -121,7 +141,7 @@ public class Cart implements ProductGroup<Product, Item> {
      * Pre-Condition: products is initialized
      * Post-Condition: A boolean is returned
      * @return The boolean if the cart is empty
-     */
+     */@Override
     public boolean isEmpty() {
         return products.isEmpty();
     }

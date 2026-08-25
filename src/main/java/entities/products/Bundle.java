@@ -68,6 +68,20 @@ public class Bundle implements Product, ProductGroup<Product, Item> {
     }
 
     /**
+     * Description: Deletes a product from the bundle entirely, by name
+     * Pre-Condition: Param is a string
+     * Post-Condition: The bundle has this product deleted from it
+     * @param name The name of the product being deleted
+     */
+    @Override
+    public void deleteByName(String name) {
+        for (Product p : products.keySet()) {
+            if (p.getName().equals(name))
+                products.remove(p);
+        }
+    }
+
+    /**
      * Description: Empties the bundle
      * Pre-Condition: None
      * Post-Condition: The bundle is cleared and has zero products

@@ -10,7 +10,7 @@ import java.util.Map;
  * Description: A collection of cards that are intended to be played together in the PMO Game
  * Name: Nico Rotella
  * Date Created: August 20th, 2026
- * Last Edited: August 20th, 2026
+ * Last Edited: August 24th, 2026
  */
 
 // Class
@@ -68,6 +68,20 @@ public class Deck implements ProductGroup<Card, Card> {
     }
 
     /**
+     * Description: Deletes a card from the deck entirely, by name
+     * Pre-Condition: Param is a string
+     * Post-Condition: The deck has this card deleted from it
+     * @param name The name of the card being deleted
+     */
+    @Override
+    public void deleteByName(String name) {
+        for (Card c : cards.keySet()) {
+            if (c.getName().equals(name))
+                cards.remove(c);
+        }
+    }
+
+    /**
      * Description: Empties the deck
      * Pre-Condition: None
      * Post-Condition: The deck is cleared and has zero cards
@@ -121,6 +135,40 @@ public class Deck implements ProductGroup<Card, Card> {
         return cards.isEmpty();
     }
 
+    /**
+     * Description: Returns the total amount of cards in the deck
+     * Pre-Condition: None
+     * Post-Condition: Total amount of cards is returned
+     * @return The total amount of cards (Integer, not int)
+     */
+    private Integer totalCards() {
+        Integer totalCards = 0;
+        for (Integer i : cards.values())
+            totalCards += i;
+        return totalCards;
+    }
+
+    /**
+     * Description: Checks if a deck is valid
+     * Pre-Condition: None
+     * Post-Condition: Boolean if deck is valid is returned
+     * @return The boolean if deck is valid
+     */
+    public boolean isValid() {
+        // Checking that there is at least 10 cards
+        if (totalCards() < 10)
+            return false; // Less than 10
+
+        // Checking that there is no card in the deck more than 4 times
+        for (Integer i : cards.values()) {
+            if (i > 4)
+                return false; // More than 4
+        }
+
+        // Deck is valid, no card is allowed in deck that is not in inventory, this is checked in DeckCMD
+        return true;
+    }
+
     // Getter
     /**
      * Description: Functions entirely as getCards(), this method is a getter
@@ -131,6 +179,15 @@ public class Deck implements ProductGroup<Card, Card> {
     @Override
     public Map<Card, Integer> toItems() {
         return cards;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    // Setter
+    public void setId(Integer i) {
+        id = i;
     }
 
 }
