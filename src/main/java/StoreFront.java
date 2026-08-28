@@ -19,8 +19,8 @@ public final class StoreFront {
     // Static fields
     static Inventory inventory = new Inventory(); // Initialized in open store method
     static Customers customers = new Customers();
-    static ArrayList<Command> commands = new ArrayList<Command>();
-    static ArrayList<String> incomingCommands = new ArrayList<String>();
+    static List<Command> commands = new ArrayList<>();
+    static List<String> incomingCommands = new ArrayList<>();
 
     // main
     public static void main(String[] args) {
