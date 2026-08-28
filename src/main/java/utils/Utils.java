@@ -98,6 +98,7 @@ public final class Utils {
                 CREATE TABLE IF NOT EXISTS decks (
                 deck_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
                 FOREIGN KEY(customer_id) REFERENCES customers(id)
                 )""",
                 """

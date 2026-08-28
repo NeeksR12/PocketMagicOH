@@ -21,7 +21,7 @@ public class Customer implements Persistable {
 
     // Attributes
     private final String name;
-    private TrackedCollection<Cart> carts = new TrackedCollection<Cart>();
+    private TrackedCollection<Cart> carts = new TrackedCollection<>();
     private TrackedCollection<Deck> decks = new TrackedCollection<>();
     private Integer id;
 
@@ -266,6 +266,14 @@ public class Customer implements Persistable {
         return id;
     }
 
+    public TrackedCollection<Cart> getCarts() {
+        return carts;
+    }
+
+    public TrackedCollection<Deck> getDecks () {
+        return decks;
+    }
+
     public Set<Cart> getDirtyCarts() {
         return carts.getDirty();
     }
@@ -274,12 +282,12 @@ public class Customer implements Persistable {
         return decks.getDirty();
     }
 
-    public TrackedCollection<Cart> getCarts() {
-        return carts;
+    public Set<Cart> getDeletedCarts() {
+        return carts.getDeleted();
     }
 
-    public TrackedCollection<Deck> getDecks () {
-        return decks;
+    public Set<Deck> getDeletedDecks() {
+        return decks.getDeleted();
     }
 
     // Setter

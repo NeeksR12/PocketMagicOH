@@ -88,15 +88,16 @@ public class CheckoutCMD extends Command {
 
             // Managing dirty customer and clearing cart
             customers.markDirty(customer);
+            customer.markCartDirty(cart);
             cart.empty();
         }
         catch (IllegalArgumentException e) {
-            Map<Item, Integer> insufficient = new HashMap<Item, Integer>();
+            Map<Item, Integer> insufficient = new HashMap<>();
             StringBuilder sb = new StringBuilder();
 
             // Checking which items were out of stock
             for (var entry : cart.toItems().entrySet()) {
-                if (entry.getKey().getStock() <= entry.getValue()) {
+                if (entry.getKey().getStock() < entry.getValue()) {
                     insufficient.put(entry.getKey(), entry.getValue());
                 }
             }

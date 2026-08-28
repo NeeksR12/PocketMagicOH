@@ -29,7 +29,7 @@ public class CartCMD extends Command {
     private String cartName;
     private Customer customer;
     private Cart cart;
-    private final Map<String, String> updates = new HashMap<String, String>();
+    private final Map<String, String> updates = new HashMap<>();
 
 
     // Constructor
@@ -110,7 +110,7 @@ public class CartCMD extends Command {
         // Checking that the updates are valid
         switch (action) {
             case ADD -> {
-                // Setting the cart if the customer has it already (if not added later)
+                // Setting the cart if the customer has it already (if not, added later)
                 if (customer.hasCart(cartName)) // Already existed
                     cart = customer.getCartByName(cartName);
                 
@@ -191,8 +191,15 @@ public class CartCMD extends Command {
      */
     @Override
     public void run() {
+        // Marking the customer dirty
         customers.markDirty(customer);
-        customer.markCartDirty(cart);
+
+        // Marking the cart dirty
+        if (cart != null) {
+            customer.markCartDirty(cart);
+        }
+
+        // Running the command
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();
@@ -209,8 +216,10 @@ public class CartCMD extends Command {
      */
     private void add() {
         // Adding the cart if it was new
-        if (cart.getId() == null)
+        if (cart == null) {
+            cart = new Cart(cartName);
             customer.addCart(cart);
+        }
 
         // Adding the updates to the cart
         for (var entry : updates.entrySet()) {

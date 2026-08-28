@@ -16,10 +16,6 @@ import java.util.List;
  */
 public class ReportInventoryCMD extends Command{
 
-    // Static final string builder
-    private static final StringBuilder sb = new StringBuilder();
-
-
     // Constructor
     public ReportInventoryCMD(String i, Inventory inv, Customers c) {
         super(i, inv, c);
@@ -47,7 +43,8 @@ public class ReportInventoryCMD extends Command{
     public void run() {
 
         // Variables and objects
-        List<Product> nonItems = new ArrayList<Product>();
+        StringBuilder sb = new StringBuilder();
+        List<Product> nonItems = new ArrayList<>();
 
         sb.append("\nINVENTORY\n");
         if (inventory.hasStock()) {

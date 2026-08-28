@@ -38,12 +38,12 @@ public class TrackedCollection<T extends Persistable> {
      * @throws NoSuchElementException if not found
      */
     public T getByName(String name) throws NoSuchElementException {
-        T t = persistables.get(name);
+        T persistable = persistables.get(name);
 
-        if (t == null)
+        if (persistable == null)
             throw new NoSuchElementException("Error, not found: " + name); // Not found
         else
-            return t; // Found
+            return persistable; // Found
     }
 
     /**

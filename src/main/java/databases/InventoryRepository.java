@@ -33,8 +33,8 @@ public final class InventoryRepository {
     public static void fillInventory(Connection conn, Inventory inventory) {
 
         // Variables and objects
-        Map<Integer, String> products = new HashMap<Integer, String>();
-        List<Integer> bundle_ids = new ArrayList<Integer>();
+        Map<Integer, String> products = new HashMap<>();
+        List<Integer> bundle_ids = new ArrayList<>();
         ProductType productType;
 
         // SQL
@@ -257,10 +257,8 @@ public final class InventoryRepository {
             else { // Just an update, product has been in the DB before
                 update(conn, p);
             }
-        }
 
-        // Saving any changes to bundle items
-        for (Product p : inventory.getDirtyProducts()) {
+            // Saving any changes to bundle items
             if (p instanceof Bundle b)
                 saveBundleItems(conn, b);
         }
@@ -473,7 +471,7 @@ public final class InventoryRepository {
     }
 
     /**
-     * Description: Removes a product from the DB
+     * Description: Deletes a product from the DB
      * Pre-Condition: This product is already in the DB and connection is set up properly
      * Post-Condition: This product no longer exists in the DB
      * @param conn The connection to the DB
@@ -486,49 +484,49 @@ public final class InventoryRepository {
         ProductType productType = ProductType.valueOf(p.getType());
 
         // SQL
-        String sqlRemoveFromBundleItems = "DELETE FROM bundle_items WHERE bundle_id = ? OR product_id = ?";
+        String sqlDeleteFromBundleItems = "DELETE FROM bundle_items WHERE bundle_id = ? OR product_id = ?";
         // Not complete statement, needs values.
 
-        String sqlRemoveFromCards = "DELETE FROM cards WHERE product_id = ?";
+        String sqlDeleteFromCards = "DELETE FROM cards WHERE product_id = ?";
         // Not complete statement, needs product id
 
-        String sqlRemoveFromBundles = "DELETE FROM bundles WHERE product_id = ?";
+        String sqlDeleteFromBundles = "DELETE FROM bundles WHERE product_id = ?";
         // Not complete statement, needs product id
 
-        String sqlRemoveFromProducts = "DELETE FROM products WHERE id = ?";
+        String sqlDeleteFromProducts = "DELETE FROM products WHERE id = ?";
         // Not complete statement, needs id
 
         // Removing from bundle_items
-        try (PreparedStatement pstmtRemoveFromBundleItems = conn.prepareStatement(sqlRemoveFromBundleItems)) {
-            pstmtRemoveFromBundleItems.setInt(1, p.getId());
-            pstmtRemoveFromBundleItems.setInt(2, p.getId());
+        try (PreparedStatement pstmtDeleteFromBundleItems = conn.prepareStatement(sqlDeleteFromBundleItems)) {
+            pstmtDeleteFromBundleItems.setInt(1, p.getId());
+            pstmtDeleteFromBundleItems.setInt(2, p.getId());
 
-            pstmtRemoveFromBundleItems.executeUpdate();
+            pstmtDeleteFromBundleItems.executeUpdate();
         }
 
         // Removing from type table
         switch (productType) {
             case CARD -> {
-                try (PreparedStatement pstmtRemoveFromCards = conn.prepareStatement(sqlRemoveFromCards)) {
-                    pstmtRemoveFromCards.setInt(1, p.getId());
+                try (PreparedStatement pstmtDeleteFromCards = conn.prepareStatement(sqlDeleteFromCards)) {
+                    pstmtDeleteFromCards.setInt(1, p.getId());
 
-                    pstmtRemoveFromCards.executeUpdate();
+                    pstmtDeleteFromCards.executeUpdate();
                 }
             }
             case BUNDLE -> {
-                try (PreparedStatement pstmtRemoveFromBundles = conn.prepareStatement(sqlRemoveFromBundles)) {
-                    pstmtRemoveFromBundles.setInt(1, p.getId());
+                try (PreparedStatement pstmtDeleteFromBundles = conn.prepareStatement(sqlDeleteFromBundles)) {
+                    pstmtDeleteFromBundles.setInt(1, p.getId());
 
-                    pstmtRemoveFromBundles.executeUpdate();
+                    pstmtDeleteFromBundles.executeUpdate();
                 }
             }
         }
 
         // Removing from products
-        try (PreparedStatement pstmtRemoveFromProducts = conn.prepareStatement(sqlRemoveFromProducts)) {
-            pstmtRemoveFromProducts.setInt(1, p.getId());
+        try (PreparedStatement pstmtDeleteFromProducts = conn.prepareStatement(sqlDeleteFromProducts)) {
+            pstmtDeleteFromProducts.setInt(1, p.getId());
 
-            pstmtRemoveFromProducts.executeUpdate();
+            pstmtDeleteFromProducts.executeUpdate();
         }
     }
 

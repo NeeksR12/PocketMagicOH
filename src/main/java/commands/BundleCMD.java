@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
  * Description: Bundle command to handle all actions related to bundle
  * Name: Nico Rotella
  * Date Created: August 6th, 2026
- * Last Edited: August 20th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -189,7 +189,12 @@ public class BundleCMD extends Command {
      */
     @Override
     public void run() {
-        inventory.markDirty(bundle);
+        // Marking the bundle dirty
+        if (bundle != null) { // If it is, being added, adding makes dirty
+            inventory.markDirty(bundle);
+        }
+
+        // Running the command
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();

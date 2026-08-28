@@ -257,6 +257,7 @@ public class Inventory {
 
         // Sufficient stock, removing stock from inventory
         for (var entry : c.toItems().entrySet()) {
+            markDirty(entry.getKey());
             entry.getKey().removeStock(entry.getValue()); // Shouldn't throw since checked above
         }
     }

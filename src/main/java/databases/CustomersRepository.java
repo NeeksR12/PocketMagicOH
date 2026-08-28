@@ -37,7 +37,7 @@ public final class CustomersRepository {
     public static void fillCustomers(Connection conn, Customers customers, Inventory inventory) {
 
         // Variables and objects
-        Map<Integer, String> shoppers = new HashMap<Integer, String>();
+        Map<Integer, String> shoppers = new HashMap<>();
 
         // SQL
         String sql = "SELECT id, name FROM customers";
@@ -168,7 +168,7 @@ public final class CustomersRepository {
             } // For each cart the customer has
         }
         catch (SQLException e) {
-            throw new RuntimeException("Database error while fetching cart", e);
+            throw new RuntimeException("Database error while fetching cart: " + e.getMessage());
         }
 
         return carts;
@@ -188,7 +188,7 @@ public final class CustomersRepository {
     private static TrackedCollection<Deck> fillDecks(Connection conn, int customer_id, Inventory inventory) {
 
         // Variables and objects
-        Map<Integer, String> deckInfo = new HashMap<Integer, String>(); // id -> name
+        Map<Integer, String> deckInfo = new HashMap<>(); // id -> name
         TrackedCollection<Deck> decks = new TrackedCollection<>();
         Deck deck;
 
@@ -249,13 +249,13 @@ public final class CustomersRepository {
                     }
                 }
 
-                // Adding the filled cart
+                // Adding the filled deck
                 decks.add(deck);
 
-            } // For each cart the customer has
+            } // For each deck the customer has
         }
         catch (SQLException e) {
-            throw new RuntimeException("Database error while fetching cart", e);
+            throw new RuntimeException("Database error while fetching deck: " + e.getMessage());
         }
 
         return decks;
@@ -421,7 +421,16 @@ public final class CustomersRepository {
 
             saveDeckCards(conn, deck);
         }
-
+        
+        // Deleted carts in the customer
+        for (Cart cart : c.getDeletedCarts()) {
+            deleteCart(conn, cart);
+        }
+        
+        // Deleted decks in the customer
+        for (Deck deck : c.getDeletedDecks()) {
+            deleteDeck(conn, deck);
+        }
     }
 
     /**
@@ -505,7 +514,7 @@ public final class CustomersRepository {
     }
 
     /**
-     * Description: Removes a customer from the DB
+     * Description: Deletes a customer from the DB
      * Pre-Condition: This customer is already in the DB and connection is set up properly
      * Post-Condition: This customer no longer exists in the DB
      * @param conn The connection to the DB
@@ -515,65 +524,89 @@ public final class CustomersRepository {
     private static void delete(Connection conn, Customer c) throws SQLException {
 
         // SQL
-        String sqlRemoveFromCartItems = "DELETE FROM cart_items WHERE cart_id = ?";
-        // Not complete statement, needs cart_id
-
-        String sqlRemoveFromCarts = "DELETE FROM carts WHERE customer_id = ?";
-        // Not complete statement, needs customer_id
-
-        String sqlRemoveFromDeckCards = "DELETE FROM deck_cards WHERE deck_id = ?";
-        // Not complete statement, needs deck_id
-
-        String sqlRemoveFromDecks = "DELETE FROM decks WHERE customer_id = ?";
-        // Not complete statement, needs customer_id
-
-        String sqlRemoveFromCustomers = "DELETE FROM customers WHERE id = ?";
+        String sqlDeleteFromCustomers = "DELETE FROM customers WHERE id = ?";
         // Not complete statement, needs id
-
-        // Removing from cart_items
-        try (PreparedStatement pstmtRemoveFromCartItems = conn.prepareStatement(sqlRemoveFromCartItems)) {
-            for (Cart cart : c.getCarts().values()) {
-                pstmtRemoveFromCartItems.setInt(1, cart.getId()); // cart_id
-
-                pstmtRemoveFromCartItems.addBatch();
-            }
-
-            // Running the batch
-            pstmtRemoveFromCartItems.executeBatch();
+        
+        // Deleting all the carts this customer had
+        for (Cart cart : c.getCarts().values()) {
+            deleteCart(conn, cart);
         }
 
-        // Removing from carts
-        try (PreparedStatement pstmtRemoveFromCarts = conn.prepareStatement(sqlRemoveFromCarts)) {
-            pstmtRemoveFromCarts.setInt(1, c.getId()); // customer_id
-
-            pstmtRemoveFromCarts.executeUpdate();
+        // Deleting all the decks this customer had
+        for (Deck deck : c.getDecks().values()) {
+            deleteDeck(conn, deck);
         }
+        
+        // Delete from customers
+        try (PreparedStatement pstmtDeleteFromCustomers = conn.prepareStatement(sqlDeleteFromCustomers)) {
+            pstmtDeleteFromCustomers.setInt(1, c.getId()); // id
 
-        // Removing from deck_cards
-        try (PreparedStatement pstmtRemoveFromDeckCards = conn.prepareStatement(sqlRemoveFromDeckCards)) {
-            for (Deck deck : c.getDecks().values()) {
-                pstmtRemoveFromDeckCards.setInt(1, deck.getId()); // deck_id
-
-                pstmtRemoveFromDeckCards.addBatch();
-            }
-
-            // Running the batch
-            pstmtRemoveFromDeckCards.executeBatch();
-        }
-
-        // Removing from carts
-        try (PreparedStatement pstmtRemoveFromDecks = conn.prepareStatement(sqlRemoveFromDecks)) {
-            pstmtRemoveFromDecks.setInt(1, c.getId()); // customer_id
-
-            pstmtRemoveFromDecks.executeUpdate();
-        }
-
-        // Remove from customers
-        try (PreparedStatement pstmtRemoveFromCustomers = conn.prepareStatement(sqlRemoveFromCustomers)) {
-            pstmtRemoveFromCustomers.setInt(1, c.getId()); // id
-
-            pstmtRemoveFromCustomers.executeUpdate();
+            pstmtDeleteFromCustomers.executeUpdate();
         }
     } // delete
+
+    /**
+     * Description: Deletes a cart from the DB
+     * Pre-Condition: This cart is already in the DB and connection is set up properly
+     * Post-Condition: This cart no longer exists in the DB
+     * @param conn The connection to the DB
+     * @param cart The cart
+     * @throws SQLException if there is an SQL issue
+     */
+    private static void deleteCart(Connection conn, Cart cart) throws SQLException {
+
+        // SQL
+        String sqlDeleteFromCartItems = "DELETE FROM cart_items WHERE cart_id = ?";
+        // Not complete statement, needs cart_id
+
+        String sqlDeleteFromCarts = "DELETE FROM carts WHERE cart_id = ?";
+        // Not complete statement, needs cart_id
+
+        // Removing from cart_items
+        try (PreparedStatement pstmtDeleteFromCartItems = conn.prepareStatement(sqlDeleteFromCartItems)) {
+            pstmtDeleteFromCartItems.setInt(1, cart.getId()); // cart_id
+
+            pstmtDeleteFromCartItems.executeUpdate();
+        }
+
+        // Removing from carts
+        try (PreparedStatement pstmtDeleteFromCarts = conn.prepareStatement(sqlDeleteFromCarts)) {
+            pstmtDeleteFromCarts.setInt(1, cart.getId()); // cart_id
+
+            pstmtDeleteFromCarts.executeUpdate();
+        }
+    }
+
+    /**
+     * Description: Deletes a deck from the DB
+     * Pre-Condition: This deck is already in the DB and connection is set up properly
+     * Post-Condition: This deck no longer exists in the DB
+     * @param conn The connection to the DB
+     * @param deck The deck
+     * @throws SQLException if there is an SQL issue
+     */
+    private static void deleteDeck(Connection conn, Deck deck) throws SQLException {
+        
+        // SQL
+        String sqlDeleteFromDeckCards = "DELETE FROM deck_cards WHERE deck_id = ?";
+        // Not complete statement, needs deck_id
+
+        String sqlDeleteFromDecks = "DELETE FROM decks WHERE deck_id = ?";
+        // Not complete statement, needs deck_id
+
+        // Removing from deck_cards
+        try (PreparedStatement pstmtDeleteFromDeckCards = conn.prepareStatement(sqlDeleteFromDeckCards)) {
+            pstmtDeleteFromDeckCards.setInt(1, deck.getId()); // deck_id
+
+            pstmtDeleteFromDeckCards.executeUpdate();
+        }
+
+        // Removing from decks
+        try (PreparedStatement pstmtDeleteFromDecks = conn.prepareStatement(sqlDeleteFromDecks)) {
+            pstmtDeleteFromDecks.setInt(1, deck.getId()); // deck_id
+
+            pstmtDeleteFromDecks.executeUpdate();
+        }
+    }
     
 }

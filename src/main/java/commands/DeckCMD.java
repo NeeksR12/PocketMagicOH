@@ -110,7 +110,7 @@ public class DeckCMD extends Command {
         // Checking that the updates are valid
         switch (action) {
             case ADD -> {
-                // Setting the deck if the customer has it already
+                // Setting the deck if the customer has it already (if not, added later)
                 if (customer.hasDeck(deckName)) // Already existed
                     deck = customer.getDeckByName(deckName);
 
@@ -197,8 +197,15 @@ public class DeckCMD extends Command {
      */
     @Override
     public void run() {
+        // Marking the customer dirty
         customers.markDirty(customer);
-        customer.markDeckDirty(deck);
+
+        // Marking the deck dirty
+        if (deck != null) {
+            customer.markDeckDirty(deck);
+        }
+
+        // Running the command
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();
@@ -215,8 +222,10 @@ public class DeckCMD extends Command {
      */
     private void add() {
         // Adding the deck if it was new
-        if (deck.getId() == null)
+        if (deck == null) {
+            deck = new Deck(deckName);
             customer.addDeck(deck);
+        }
 
         // Adding the updates to the deck
         for (var entry : updates.entrySet()) {
