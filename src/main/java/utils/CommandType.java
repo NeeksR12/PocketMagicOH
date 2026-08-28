@@ -8,7 +8,7 @@ import databases.*;
  * ENUM that contains a way to create a command object for each type of command
  * Name: Nico Rotella
  * Date Created: May 22nd, 2026
- * Last Edited: August 20th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Enum
@@ -42,6 +42,18 @@ public enum CommandType {
         @Override
         public Command create(String input, Inventory inventory, Customers customers) {
             return new BundleCMD(input, inventory, customers);
+        }
+    },
+    DECK {
+        @Override
+        public Command create(String input, Inventory inventory, Customers customers) {
+            return new DeckCMD(input, inventory, customers);
+        }
+    },
+    CHECK_DECK {
+        @Override
+        public Command create(String input, Inventory inventory, Customers customers) {
+            return new Check_DeckCMD(input, inventory, customers);
         }
     }; // , between different enum inheritors
 

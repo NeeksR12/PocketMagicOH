@@ -15,7 +15,7 @@ import java.util.*;
  * Description: Contains the stores inventory of cards and related methods to manipulate it
  * Name: Nico Rotella
  * Date Created: May 25th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  */
 public class Inventory {
 
@@ -79,17 +79,7 @@ public class Inventory {
      * @param p The product
      */
     public void markDirty(Product p) {
-        products.markDeleted(p);
-    }
-
-    /**
-     * Description: Takes a product and marks it as a deleted product for the DB to worry about
-     * Pre-Condition: Param is a product
-     * Post-Condition: The product is ready to be deleted from the DB and is removed from inv
-     * @param p The product
-     */
-    private void markDeleted(Product p) {
-        products.markDeleted(p);
+        products.markDirty(p);
     }
 
     /**
@@ -126,16 +116,11 @@ public class Inventory {
      * @param name The name of the product being removed
      * @throws IllegalArgumentException if the product is not in the inventory
      */
-    public void removeProductByName(String name) throws IllegalArgumentException {
-
-        // Variables and objects
-        Product product;
-
-        // Checking if this is a valid product
-        try { // Contains product
-            product = getProductByName(name);
+    public void deleteProductByName(String name) throws IllegalArgumentException {
+        try {
+            products.deleteByName(name); // This also marks deleted
         }
-        catch (NoSuchElementException e) { // Did not contain product
+        catch (NoSuchElementException e) {
             throw new IllegalArgumentException("Error, this product is not in the inventory therefore cannot be removed");
         }
 
@@ -144,9 +129,6 @@ public class Inventory {
             if (p instanceof ProductGroup<?, ?> pc && pc.hasProduct(name))
                 pc.deleteByName(name);
         }
-
-        // Marking the product as deleted
-        markDeleted(product);
     }
 
 

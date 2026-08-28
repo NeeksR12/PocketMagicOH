@@ -13,7 +13,7 @@ import java.util.*;
  * Description: A customer object which can hold carts and decks
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -51,7 +51,7 @@ public class Customer implements Persistable {
      * @param c The cart being added
      * @throws IllegalArgumentException if the customer already has this cart
      */
-    public void addCart(Cart c) {
+    public void addCart(Cart c) throws IllegalArgumentException{
         try {
             carts.add(c);
         }
@@ -68,12 +68,29 @@ public class Customer implements Persistable {
      * @return The cart if found
      * @throws NoSuchElementException if not found
      */
-    public Cart getCartByName(String name) {
+    public Cart getCartByName(String name) throws NoSuchElementException {
         try {
             return carts.getByName(name);
         }
         catch (NoSuchElementException e) {
             throw new NoSuchElementException("Error, this customer does not have this cart.");
+        }
+    }
+
+    /**
+     * Description: Deletes a cart by name
+     * Pre-Condition: Customer is initialized
+     * Post-Condition: The cart is removed from this customer
+     * @param name The name of the cart
+     * @throws IllegalArgumentException if this is not a cart that the customer has
+     */
+    public void deleteCartByName(String name) throws IllegalArgumentException {
+        try {
+            carts.deleteByName(name);
+        }
+        catch (NoSuchElementException e) {
+            throw new IllegalArgumentException(String.format("Error, %s does not have a cart named %s therefore it " +
+                    "cannot be deleted.", this.getName(), name));
         }
     }
 
@@ -85,16 +102,6 @@ public class Customer implements Persistable {
      */
     public void markCartDirty(Cart c) {
         carts.markDirty(c);
-    }
-
-    /**
-     * Definition: Takes a cart and marks it as a deleted cart for the DB to worry about
-     * Pre-Condition: Param is a cart that is in the customer
-     * Post-Condition: The cart is ready to be deleted from the DB and is removed from shoppers
-     * @param c The cart
-     */
-    private void markCartDeleted(Cart c) {
-        carts.markDeleted(c);
     }
 
     /**
@@ -126,7 +133,7 @@ public class Customer implements Persistable {
      * @param d The deck being added
      * @throws IllegalArgumentException if the customer already has this deck
      */
-    public void addDeck(Deck d) {
+    public void addDeck(Deck d) throws IllegalArgumentException {
         try {
             decks.add(d);
         }
@@ -143,12 +150,30 @@ public class Customer implements Persistable {
      * @return The deck if found
      * @throws NoSuchElementException if not found
      */
-    public Deck getDeckByName(String name) {
+    public Deck getDeckByName(String name) throws NoSuchElementException {
         try {
             return decks.getByName(name);
         }
         catch (NoSuchElementException e) {
             throw new NoSuchElementException("Error, this customer does not have this deck.");
+        }
+    }
+
+
+    /**
+     * Description: Deletes a deck by name
+     * Pre-Condition: Customer is initialized
+     * Post-Condition: The deck is removed from this customer
+     * @param name The name of the deck
+     * @throws IllegalArgumentException if this is not a deck that the customer has
+     */
+    public void deleteDeckByName(String name) throws IllegalArgumentException {
+        try {
+            decks.deleteByName(name);
+        }
+        catch (NoSuchElementException e) {
+            throw new IllegalArgumentException(String.format("Error, %s does not have a deck named %s therefore it " +
+                    "cannot be deleted.", this.getName(), name));
         }
     }
 
@@ -160,16 +185,6 @@ public class Customer implements Persistable {
      */
     public void markDeckDirty(Deck d) {
         decks.markDirty(d);
-    }
-
-    /**
-     * Definition: Takes a deck and marks it as a deleted deck for the DB to worry about
-     * Pre-Condition: Param is a deck that is in the customer
-     * Post-Condition: The deck is ready to be deleted from the DB and is removed from shoppers
-     * @param d The deck
-     */
-    private void markDeckDeleted(Deck d) {
-        decks.markDeleted(d);
     }
 
     /**

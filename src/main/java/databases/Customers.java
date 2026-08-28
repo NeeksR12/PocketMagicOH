@@ -10,7 +10,7 @@ import java.util.*;
  * Description: Database showing all the customers in the system
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -81,49 +81,38 @@ public class Customers {
     }
 
     /**
-     * Definition: Takes a customer and marks it as a deleted customer for the DB to worry about
-     * Pre-Condition: Param is a customer that is a shopper
-     * Post-Condition: The customer is ready to be deleted from the DB and is removed from shoppers
-     * @param c The customer
-     */
-    private void markDeleted(Customer c) {
-        shoppers.markDeleted(c);
-    }
-
-    /**
-     * Description: Clears the dirty and deleted sets
+     * Description: Clears the dirty and deleted sets of the shoppers
      * Pre-Condition: None
      * Post-Condition: Dirty and deleted sets are cleared
      */
     public void clearDirtyTracking() {
+        // Clearing the dirty tracking within each dirty customer
+        for (Customer c : shoppers.getDirty()) {
+            c.clearCartDirtyTracking();
+            c.clearDeckDirtyTracking();
+        }
+
+        // Clearing dirty shoppers
         shoppers.clearDirtyTracking();
     }
 
 
     // General customer operations
     /**
-     * Description: Removes a shopper by name
+     * Description: Deletes a shopper by name
      * Pre-Condition: Customers is initialized
      * Post-Condition: The customer is removed from shoppers
      * @param name The name of the customer
      * @throws IllegalArgumentException if the customer is not a shopper
      */
-    public void removeCustomerByName(String name) throws IllegalArgumentException {
-
-        // Variables and objects
-        Customer customer;
-
-        // Checking if this is a valid customer
+    public void deleteCustomerByName(String name) throws IllegalArgumentException {
         try {
-            customer = getCustomerByName(name);
+            shoppers.deleteByName(name);
         }
         catch (NoSuchElementException e) {
             throw new IllegalArgumentException(String.format("Error, %s is not a shopper therefore cannot be removed.",
                     name));
         }
-
-        // Marking the customer as deleted
-        markDeleted(customer);
     }
 
     /**

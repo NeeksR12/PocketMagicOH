@@ -248,7 +248,7 @@ public class BundleCMD extends Command {
      */
     private void delete() {
         customers.deleteProductFromAllCustomers(bundle); // Failsafe, should never execute
-        inventory.removeProductByName(name); // Marks deleted
+        inventory.deleteProductByName(name); // Marks deleted
         output = String.format("bundle %s deleted", name);
     }
 

@@ -8,7 +8,7 @@ import java.util.*;
  * Description: A collection of a persistable objects that must be tracked throughout software runs
  * Name: Nico Rotella
  * Date Created: August 25th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  * @param <T> The persistable being tracked
  */
 public class TrackedCollection<T extends Persistable> {
@@ -64,6 +64,19 @@ public class TrackedCollection<T extends Persistable> {
     }
 
     /**
+     * Description: Deletes a persistable if it is being tracked and marks it as such
+     * Pre-Condition: Collection is initialized
+     * Post-Condition: Persistable is deleted from the collection and marked as such or exception is thrown
+     * @param name The name of the persistable
+     * @throws NoSuchElementException if this persistable is not being tracked
+     */
+    public void deleteByName(String name) throws NoSuchElementException{
+        T persistable = getByName(name); // This can throw
+
+        markDeleted(persistable);
+    }
+
+    /**
      * Description: Takes a persistable and marks it as dirty for the DB to worry about
      * Pre-Condition: Should only mark a persistable dirty if being created or updated
      * Post_Condition: The persistable is marked dirty
@@ -79,7 +92,7 @@ public class TrackedCollection<T extends Persistable> {
      * Post-Condition: The persistable is ready to be deleted from the DB and is removed from inv
      * @param persistable The persistable
      */
-    public void markDeleted(T persistable) {
+    private void markDeleted(T persistable) {
         dirty.remove(persistable);
         if (persistable.getId() != null) { // Checking if the persistable has been in the DB before
             deleted.add(persistable); // It has, .'. needs to be deleted

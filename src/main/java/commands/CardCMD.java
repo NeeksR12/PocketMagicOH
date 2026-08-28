@@ -183,7 +183,7 @@ public class CardCMD extends Command {
      */
     private void delete() {
         customers.deleteProductFromAllCustomers(inventory.getCardByName(name)); // Failsafe, should never do anything
-        inventory.removeProductByName(name); // Marks deleted
+        inventory.deleteProductByName(name); // Marks deleted
         output = String.format("card %s deleted", name);
     }
 

@@ -101,7 +101,7 @@ public class CustomerCMD extends Command {
      * Post-Condition: The customer with the given name has been removed from shoppers
      */
     private void delete() {
-        customers.removeCustomerByName(name); // Marks deleted
+        customers.deleteCustomerByName(name); // Marks deleted
         output = String.format("customer %s deleted", name);
     }
 

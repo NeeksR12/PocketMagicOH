@@ -15,14 +15,14 @@ import java.util.NoSuchElementException;
  * Description: Cart Command to handle all actions related to CART
  * Name: Nico Rotella
  * Date Created: July 26th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
 public class CartCMD extends Command {
 
     // Enum
-    private enum Action {ADD, REMOVE, CLEAR}
+    private enum Action {ADD, REMOVE, CLEAR, DELETE}
 
     // Attributes
     private Action action;
@@ -48,7 +48,7 @@ public class CartCMD extends Command {
     public void parse() throws IllegalArgumentException {
         String line = input.replace(";", "").trim();
         String[] tokens = line.split("\\s+");
-        int counter = 5; // Counter for conditionally iterating through extra updates
+        int counter = 6; // Counter for conditionally iterating through extra updates
 
         // Error, shouldn't get here but
         if (!tokens[0].equals("CART")) {
@@ -62,21 +62,24 @@ public class CartCMD extends Command {
         catch (NoSuchElementException e) {
             throw new IllegalArgumentException("Error, this customer is not a shopper.");
         }
+        
+        // Cart name to run command on
+        cartName = tokens[2];
 
         // Action being done
         try {
-            action = Action.valueOf(tokens[2]);
+            action = Action.valueOf(tokens[3]);
         }
         catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("Error, %s is not a valid CART command action! " +
-                    "Expected ADD, REMOVE, or CLEAR.", tokens[2]));
+                    "Expected ADD, REMOVE, or CLEAR.", tokens[3]));
         }
 
         // Checking the desired updates
         if (action == Action.ADD || action == Action.REMOVE) {
             // The next two arguments
-            if (tokens.length >= 5) {
-                updates.put(tokens[4], tokens[3]);
+            if (tokens.length >= 6) {
+                updates.put(tokens[5], tokens[4]);
             }
             else { // Malformed command
                 throw new IllegalArgumentException("Error, command not formatted correctly, expected a quantity" +
@@ -107,6 +110,11 @@ public class CartCMD extends Command {
         // Checking that the updates are valid
         switch (action) {
             case ADD -> {
+                // Setting the cart if the customer has it already (if not added later)
+                if (customer.hasCart(cartName)) // Already existed
+                    cart = customer.getCartByName(cartName);
+                
+                // Checking updates
                 for (var entry : updates.entrySet()) {
                     // Checking if this is a product we sell
                     if (!inventory.hasProduct(entry.getKey())) {
@@ -125,9 +133,18 @@ public class CartCMD extends Command {
                 }
             } // ADD
             case REMOVE -> {
+                // Checking if the customer has this cart
+                try {
+                    cart = customer.getCartByName(cartName);
+                } catch (NoSuchElementException e) {
+                    throw new IllegalArgumentException("Error, the customer does not have the cart that is trying " +
+                            "to be updated.");
+                }
+                
+                // Checking updates
                 for (var entry : updates.entrySet()) {
                     // Checking that this is a product in their cart
-                    if (!customer.getCart().hasProduct(entry.getKey())) {
+                    if (!cart.hasProduct(entry.getKey())) {
                         throw new IllegalArgumentException(String.format("Error, %s is not a product in %s's cart.",
                                 entry.getKey(), customer.getName()));
                     }
@@ -141,20 +158,29 @@ public class CartCMD extends Command {
                                 "must be positive.", entry.getKey()));
                     }
                     // Checking that it is possible to remove that many of this product from their cart
-                    if (customer.getCart().quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
+                    if (cart.quantityOf(entry.getKey()) < Integer.parseInt(entry.getValue())) {
                         throw new IllegalArgumentException(String.format("Error, cannot remove %s of %s from %s's cart " +
                                         "since they only have %d.", entry.getValue(), entry.getKey(), customer.getName(),
-                                customer.getCart().quantityOf(entry.getKey())));
+                                cart.quantityOf(entry.getKey())));
                     }
                 }
             } // REMOVE
             case CLEAR -> {
                 // Checking that there are no more arguments after the action
-                if (tokens.length > 3) {
-                    throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s.",
-                            tokens[0], tokens[1], tokens[2]));
+                if (tokens.length > 4) {
+                    throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s %s.",
+                            tokens[0], tokens[1], tokens[2], tokens[3]));
                 }
             } // CLEAR
+            case DELETE -> {
+                // Checking if the customer has this deck
+                try {
+                    cart = customer.getCartByName(cartName);
+                } catch (NoSuchElementException e) {
+                    throw new IllegalArgumentException("Error, the customer does not have the cart that is trying " +
+                            "to be updated.");
+                }
+            } // DELETE
         } // Switch action
     } // parse
 
@@ -166,11 +192,12 @@ public class CartCMD extends Command {
     @Override
     public void run() {
         customers.markDirty(customer);
-        customer.markCartDirty()
+        customer.markCartDirty(cart);
         switch (action) {
             case ADD -> add();
             case REMOVE -> remove();
             case CLEAR -> clear();
+            case DELETE -> delete();
             default -> output = "Error, this was not a valid CART command.";
         }
     }
@@ -181,11 +208,16 @@ public class CartCMD extends Command {
      * Post-Condition: The items have been added to the cart and the output has been set
      */
     private void add() {
+        // Adding the cart if it was new
+        if (cart.getId() == null)
+            customer.addCart(cart);
+
+        // Adding the updates to the cart
         for (var entry : updates.entrySet()) {
-            customer.getCart().add(inventory.getProductByName(entry.getKey()),
+            cart.add(inventory.getProductByName(entry.getKey()),
                     Integer.parseInt(entry.getValue()));
         }
-        output = String.format("%s cart updated", customer.getName());
+        output = String.format("%s cart %s updated", customer.getName(), cartName);
     }
 
     /**
@@ -195,10 +227,10 @@ public class CartCMD extends Command {
      */
     private void remove() {
         for (var entry : updates.entrySet()) {
-            customer.getCart().remove(inventory.getProductByName(entry.getKey()),
+            cart.remove(inventory.getProductByName(entry.getKey()),
                     Integer.parseInt(entry.getValue()));
         }
-        output = String.format("%s cart updated", customer.getName());
+        output = String.format("%s cart %s updated", customer.getName(), cartName);
     }
 
     /**
@@ -207,8 +239,18 @@ public class CartCMD extends Command {
      * Post-Condition: The cart has been cleared and the output has been set
      */
     private void clear() {
-        customer.getCart().empty();
-        output = String.format("%s cart cleared", customer.getName());
+        cart.empty();
+        output = String.format("%s cart %s cleared", customer.getName(), cartName);
+    }
+
+    /**
+     * Description: Deletes a cart from a customer and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The cart has been deleted and the output has been set
+     */
+    private void delete() {
+        customer.deleteCartByName(cartName); // Won't throw if parse called
+        output = String.format("%s cart %s deleted", customer.getName(), cartName);
     }
 
 }

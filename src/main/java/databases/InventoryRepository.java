@@ -6,13 +6,14 @@ import entities.products.items.Card;
 import utils.ProductType;
 
 import java.sql.*;
+import java.util.*;
 
 /**
  * InventoryRepository
- * Description: Helper class to take an inventory object and store it in a DB
+ * Description: Helper class to read and write to and from an inventory object and stored in a DB
  * Name: Nico Rotella
  * Date Created: August 19th, 2026
- * Last Edited: August 19th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -21,6 +22,222 @@ public final class InventoryRepository {
     // Private constructor, does not need an instance
     private InventoryRepository() {}
 
+
+    // Reading operations
+    /**
+     * Description: Fills the inventory from all the info in the database
+     * Pre-Condition: Connection has been passed properly
+     * Post-Condition: Inventory object is filled
+     * @param conn The connection to the database
+     */
+    public static void fillInventory(Connection conn, Inventory inventory) {
+
+        // Variables and objects
+        Map<Integer, String> products = new HashMap<Integer, String>();
+        List<Integer> bundle_ids = new ArrayList<Integer>();
+        ProductType productType;
+
+        // SQL
+        String sqlGetProducts = "SELECT * FROM products";
+
+        String sqlGetBundles = """
+                SELECT id FROM products
+                WHERE type = 'BUNDLE'""";
+
+
+        try {
+            // Filling the inventory (Pt 1, bundles empty)
+            try (Statement stmtGetProducts = conn.createStatement();
+                 ResultSet rsGetProducts = stmtGetProducts.executeQuery(sqlGetProducts)) {
+
+                // Checking each product in the inventory
+                while (rsGetProducts.next()) {
+                    products.put(rsGetProducts.getInt("id"), rsGetProducts.getString("type"));
+                }
+
+                // Adding each product to the inventory
+                for (var entry : products.entrySet()) {
+                    try {
+                        productType = ProductType.valueOf(entry.getValue());
+
+                        // Adding the product
+                        switch (productType) {
+                            case CARD -> inventory.addProduct(parseCard(conn, entry.getKey()));
+                            case BUNDLE -> inventory.addProduct(parseBundle(conn, entry.getKey()));
+                        }
+                    }
+                    catch (IllegalArgumentException e) {
+                        System.out.println("Error, invalid product type in database.");
+                    }
+                    catch (RuntimeException e) { // Also catches the NoSuchElementException
+                        System.out.println(e.getMessage());
+                    }
+                } // For each product
+            } // Filling the inventory (Bundles empty)
+
+            // Filling the bundles
+            try (Statement stmtGetBundles = conn.createStatement();
+                 ResultSet rsGetBundles = stmtGetBundles.executeQuery(sqlGetBundles)) {
+
+                // Checking each bundle in the inventory
+                while (rsGetBundles.next()) {
+                    bundle_ids.add(rsGetBundles.getInt("id"));
+                }
+
+                // Filling each bundle
+                for (Integer bundle_id : bundle_ids) {
+                    fillBundle(conn, bundle_id, inventory);
+                }
+            }
+        }
+        catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    } // fillInventory
+
+    /**
+     * Description: Returns a card object from its product id
+     * Pre-Condition: Param should be a valid id in the cards list and database is formatted correctly and connection
+     * is connected to the correct database
+     * Post-Condition: The card is returned
+     * @param conn The connection to the database
+     * @param product_id The id of the card
+     * @return The card object that was created
+     * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
+     * @throws RuntimeException if the sql is not successful.
+     */
+    private static Card parseCard(Connection conn, Integer product_id) {
+
+        // Variables and objects
+        Card c;
+
+        // SQL
+        String sql = """
+                SELECT * FROM cards
+                WHERE product_id = ?"""; // Not complete statement, needs product_id
+
+        // Reading the card
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, product_id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // No rows found, should never get here
+                if (!rs.next()) {
+                    throw new NoSuchElementException(String.format("Error, card with product_id %d not found.", product_id));
+                }
+
+                // Creating the card
+                c = new Card(
+                        rs.getString("name"),
+                        rs.getString("element"),
+                        rs.getString("rarity"),
+                        rs.getInt("price"),
+                        rs.getInt("stock")
+                );
+
+                // Setting its id
+                c.setId(product_id);
+
+                // Returning the card
+                return c;
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching card", e);
+        }
+    } // parseCard
+
+    /**
+     * Description: Returns an empty bundle object from its product id
+     * Pre-Condition: Param should be a valid id in the bundle list and database is formatted correctly and the
+     * connection is connected to the correct database
+     * Post-Condition: The bundle is returned with no contents
+     * @param conn The connection to the database
+     * @param product_id The id of the bundle
+     * @return The bundle object that was created
+     * @throws NoSuchElementException if the sql successfully works but there isn't a result with the product id
+     * @throws RuntimeException if the sql is not successful.
+     */
+    private static Bundle parseBundle(Connection conn, Integer product_id) {
+
+        // Variables and objects
+        Bundle b;
+
+        // SQL
+        String sql = """
+                SELECT name FROM bundles
+                WHERE product_id = ?"""; // Not complete statement, needs product_id
+
+        // Preparing the statement
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, product_id);
+
+            // Getting the results
+            try (ResultSet rs = pstmt.executeQuery()) {
+
+                // No rows found, should never get here
+                if (!rs.next()) {
+                    throw new NoSuchElementException(String.format("Error, bundle with product_id %d not found.", product_id));
+                }
+
+                // Creating the bundle
+                b = new Bundle(rs.getString("name"));
+
+                // Setting its id
+                b.setId(product_id);
+
+                // Returning the bundle
+                return b;
+
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    } // parseBundle
+
+    /**
+     * Description: Fills a bundle by its id
+     * Pre-Condition: Param must be an integer that is a valid bundle id and inventory must be filled with all objects
+     * and connection is connected to the correct database
+     * Post-Condition: Bundle is filled
+     * @param conn The connection to the database
+     * @param bundle_id The id of the bundle being filled
+     * @param inventory The inventory the bundle is being filed from
+     */
+    private static void fillBundle(Connection conn, Integer bundle_id, Inventory inventory) {
+
+        // Variables and objects
+        Bundle bundle = (Bundle) inventory.getProductById(bundle_id);
+
+        // SQL
+        String sql = """
+                SELECT * FROM bundle_items
+                WHERE bundle_id = ?"""; // Not a complete statement, needs bundle_id
+
+        // Preparing the statement
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, bundle_id);
+
+            // Getting the results
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // Each product in the bundle
+                while (rs.next()) {
+                    Product product = inventory.getProductById(rs.getInt("product_id"));
+                    Integer quantity = rs.getInt("quantity");
+
+                    // Adding the product
+                    bundle.add(product, quantity);
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    } // fillBundle
+
+
+    // Writing operations
     /**
      * Description: Saves an inventory object to a DB based on all changes logged to the inventory
      * Pre-Condition: Connection is set up properly and inventory is not null

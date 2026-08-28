@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
  * Description: Deck command to handle all actions related to manipulating a deck
  * Name: Nico Rotella
  * Date Created: August 24th, 2026
- * Last Edited: August 25th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -110,15 +110,16 @@ public class DeckCMD extends Command {
         // Checking that the updates are valid
         switch (action) {
             case ADD -> {
-                // Setting the deck if the customer has it already (if not, is set later)
+                // Setting the deck if the customer has it already
                 if (customer.hasDeck(deckName)) // Already existed
                     deck = customer.getDeckByName(deckName);
 
+                // Checking updates
                 for (var entry : updates.entrySet()) {
-                    // Checking if this is a deck the customer has
-                    if (!customer.hasDeck(entry.getKey())) {
-                        throw new IllegalArgumentException(String.format("Error, %s is not a deck that %s owns.", 
-                                entry.getKey(), customer.getName()));
+                    // Checking if this is a card in the inventory
+                    if (!inventory.hasCard(entry.getKey())) {
+                        throw new IllegalArgumentException(String.format("Error, %s is not a card being sold at the " +
+                                "moment.", entry.getKey()));
                     }
                     // Checking that their desired quantity was a positive integer
                     if (!Utils.isNumeric(entry.getValue())) { // Was not a number
@@ -139,6 +140,7 @@ public class DeckCMD extends Command {
                             "to be updated.");
                 }
 
+                // Checking updates
                 for (var entry : updates.entrySet()) {
                     // Checking that this is a card in this deck
                     if (!deck.hasProduct(entry.getKey())) { // This is only cards since deck implements pg<Card>
@@ -204,7 +206,57 @@ public class DeckCMD extends Command {
             case DELETE -> delete();
             default -> output = "Error this was not a valid DECK command.";
         }
+    }
 
+    /**
+     * Description: Adds the desired updates to the deck and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The items have been added to the deck and the output has been set
+     */
+    private void add() {
+        // Adding the deck if it was new
+        if (deck.getId() == null)
+            customer.addDeck(deck);
+
+        // Adding the updates to the deck
+        for (var entry : updates.entrySet()) {
+            deck.add(inventory.getCardByName(entry.getKey()),
+                    Integer.parseInt(entry.getValue()));
+        }
+        output = String.format("%s deck %s updated", customer.getName(), deckName);
+    }
+
+    /**
+     * Description: Removes the desired updates from the deck and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The items have been removed from the deck and the output has been set
+     */
+    private void remove() {
+        for (var entry : updates.entrySet()) {
+            deck.remove(inventory.getCardByName(entry.getKey()),
+                    Integer.parseInt(entry.getValue()));
+        }
+        output = String.format("%s deck %s updated", customer.getName(), deckName);
+    }
+
+    /**
+     * Description: Clears the customers deck and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The deck has been cleared and the output has been set
+     */
+    private void clear() {
+        deck.empty();
+        output = String.format("%s deck %s cleared", customer.getName(), deckName);
+    }
+
+    /**
+     * Description: Deletes a deck from a customer and sets the output
+     * Pre-Condition: Parse has already been called on the command object
+     * Post-Condition: The deck has been deleted and the output has been set
+     */
+    private void delete() {
+        customer.deleteDeckByName(deckName); // Won't throw if parse called
+        output = String.format("%s deck %s deleted", customer.getName(), deckName);
     }
 
 }

@@ -150,12 +150,12 @@ public class Deck implements ProductGroup<Card, Card>, Persistable {
     }
 
     /**
-     * Description: Checks if a deck is valid
+     * Description: Checks if a deck is legal
      * Pre-Condition: None
-     * Post-Condition: Boolean if deck is valid is returned
-     * @return The boolean if deck is valid
+     * Post-Condition: Boolean if deck is legal is returned
+     * @return The boolean if deck is legal
      */
-    public boolean isValid() {
+    public boolean isLegal() {
         // Checking that there is at least 10 cards
         if (totalCards() < 10)
             return false; // Less than 10
@@ -166,7 +166,7 @@ public class Deck implements ProductGroup<Card, Card>, Persistable {
                 return false; // More than 4
         }
 
-        // Deck is valid, no card is allowed in deck that is not in inventory, this is checked in DeckCMD
+        // Deck is legal, no card is allowed in deck that is not in inventory, this is checked in DeckCMD
         return true;
     }
 

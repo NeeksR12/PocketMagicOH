@@ -3,7 +3,6 @@ package commands;
 import databases.*;
 import entities.Cart;
 import entities.Customer;
-import entities.products.Product;
 import entities.products.items.Item;
 
 import java.util.HashMap;
@@ -15,7 +14,7 @@ import java.util.NoSuchElementException;
  * Description: Checkout Command to handle checking out a customer
  * Name: Nico Rotella
  * Date Created: July 29th, 2026
- * Last Edited: August 20th, 2026
+ * Last Edited: August 28th, 2026
  */
 
 // Class
@@ -23,6 +22,7 @@ public class CheckoutCMD extends Command {
 
     // Attributes
     private Customer customer;
+    private Cart cart;
 
 
     // Constructor
@@ -55,10 +55,19 @@ public class CheckoutCMD extends Command {
         catch (NoSuchElementException e) {
             throw new IllegalArgumentException("Error, this customer is not a shopper.");
         }
+        
+        try {
+            cart = customer.getCartByName(tokens[2]);
+        }
+        catch (NoSuchElementException e) {
+            throw new IllegalArgumentException(String.format("Error, %s does not have a cart called %s.", tokens[1], 
+                    tokens[2]));
+        }
 
         // Checking if there is anything else
-        if (tokens.length > 2) {
-            throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s.", line));
+        if (tokens.length > 3) {
+            throw new IllegalArgumentException(String.format("Error, unexpected arguments after %s %s %s.",
+                    tokens[0], tokens[1], tokens[2]));
         }
     }
 
@@ -69,28 +78,24 @@ public class CheckoutCMD extends Command {
      */
     @Override
     public void run() {
-
-        // The cart of the customer being checked out
-        Cart c = customer.getCart();
-
         // Purchasing cart
         try {
-            inventory.purchaseCart(c);
+            inventory.purchaseCart(cart);
 
             // Success
             // Setting output
-            output = String.format("%s total %d", customer.getName(), c.price());
+            output = String.format("%s total %d", customer.getName(), cart.price());
 
             // Managing dirty customer and clearing cart
             customers.markDirty(customer);
-            c.empty();
+            cart.empty();
         }
         catch (IllegalArgumentException e) {
             Map<Item, Integer> insufficient = new HashMap<Item, Integer>();
             StringBuilder sb = new StringBuilder();
 
             // Checking which items were out of stock
-            for (var entry : c.toItems().entrySet()) {
+            for (var entry : cart.toItems().entrySet()) {
                 if (entry.getKey().getStock() <= entry.getValue()) {
                     insufficient.put(entry.getKey(), entry.getValue());
                 }
