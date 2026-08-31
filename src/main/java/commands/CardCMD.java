@@ -2,6 +2,7 @@ package commands;
 
 import databases.*;
 import entities.products.items.Card;
+import utils.CardFields;
 import utils.Utils;
 
 import java.util.Arrays;
@@ -20,10 +21,9 @@ public class CardCMD extends Command {
 
     // Enums
     private enum Action {CREATE, UPDATE, DELETE}
-    private enum CreateRequired {element, rarity, price, stock}
 
     // Required fields as a string
-    private final static String requiredFields = Arrays.stream(CreateRequired.values()).map(Enum::name)
+    private final static String requiredFields = Arrays.stream(CardFields.values()).skip(1).map(Enum::name)
             .collect(Collectors.joining(", "));
 
     // Attributes
@@ -83,9 +83,9 @@ public class CardCMD extends Command {
         switch (action) {
             case CREATE -> {
                 // Check that they have each of the keys
-                for (CreateRequired cr : CreateRequired.values()) {
-                    if (!fields.containsKey(cr.name())) {
-                        throw new IllegalArgumentException(String.format("Error, command does not contain key: %s", cr.name()));
+                for (CardFields cf : CardFields.values()) {
+                    if (!cf.name().equals("name") && !fields.containsKey(cf.name())) {
+                        throw new IllegalArgumentException(String.format("Error, command does not contain key: %s", cf.name()));
                     }
                 }
                 // Check that the numeric fields are numeric
@@ -100,8 +100,8 @@ public class CardCMD extends Command {
                             " the inventory.");
 
                 // Checking if fields contains at least one of the fields to update
-                for (CreateRequired cr : CreateRequired.values()) {
-                    if (fields.containsKey(cr.name())) {
+                for (CardFields cf : CardFields.values()) {
+                    if (!cf.name().equals("name") && fields.containsKey(cf.name())) {
                         found = true;
                         break;
                     }
