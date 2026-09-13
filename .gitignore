@@ -6,6 +6,7 @@
 out/
 build/
 target/
+dependency-reduced-pom.xml
 
 # OS junk
 .DS_Store
