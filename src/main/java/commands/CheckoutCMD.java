@@ -55,7 +55,8 @@ public class CheckoutCMD extends Command {
         catch (NoSuchElementException e) {
             throw new IllegalArgumentException("Error, this customer is not a shopper.");
         }
-        
+
+        // Check if the provided cart name is a cart of the customer
         try {
             cart = customer.getCartByName(tokens[2]);
         }

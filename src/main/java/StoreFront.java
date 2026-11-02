@@ -91,7 +91,7 @@ public final class StoreFront {
                 conn.commit(); // Committing changes
 
             }
-            catch(SQLException e){ // Error with DB updates, rollback
+            catch(SQLException e) { // Error with DB updates, rollback
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackEx) { // Error with rollback
